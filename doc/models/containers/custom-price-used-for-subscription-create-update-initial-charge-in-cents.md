@@ -9,6 +9,6 @@
 
 | Type | Factory Method |
 |  --- | --- |
-| `String` | CustomPriceUsedForSubscriptionCreateUpdateInitialChargeInCents.fromMString(String mString) |
+| `String` | CustomPriceUsedForSubscriptionCreateUpdateInitialChargeInCents.fromString(String string) |
 | `int` | CustomPriceUsedForSubscriptionCreateUpdateInitialChargeInCents.fromNumber(int number) |
 

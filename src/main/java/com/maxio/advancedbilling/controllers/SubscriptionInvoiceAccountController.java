@@ -44,6 +44,51 @@ public final class SubscriptionInvoiceAccountController extends BaseController {
     }
 
     /**
+     * Credit will be added to the subscription in the amount specified in the request body. The
+     * credit is subsequently applied to the next generated invoice.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the ServiceCredit response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ServiceCredit issueServiceCredit(
+            final String subscriptionId,
+            final IssueServiceCreditRequest body) throws ApiException, IOException {
+        return prepareIssueServiceCreditRequest(subscriptionId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for issueServiceCredit.
+     */
+    private ApiCall<ServiceCredit, ApiException> prepareIssueServiceCreditRequest(
+            final String subscriptionId,
+            final IssueServiceCreditRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<ServiceCredit, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/service_credits.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ServiceCredit.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
      * Returns the `balance_in_cents` of the Subscription's Pending Discount, Service Credit, and
      * Prepayment accounts, as well as the sum of the Subscription's open, payable invoices.
      * @param  subscriptionId  Required parameter: The Chargify id of the subscription
@@ -69,11 +114,110 @@ public final class SubscriptionInvoiceAccountController extends BaseController {
                         .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, AccountBalances.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This request will list a subscription's prepayments.
+     * @param  input  ListPrepaymentsInput object containing request parameters
+     * @return    Returns the PrepaymentsResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public PrepaymentsResponse listPrepayments(
+            final ListPrepaymentsInput input) throws ApiException, IOException {
+        return prepareListPrepaymentsRequest(input).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listPrepayments.
+     */
+    private ApiCall<PrepaymentsResponse, ApiException> prepareListPrepaymentsRequest(
+            final ListPrepaymentsInput input) throws IOException {
+        return new ApiCall.Builder<PrepaymentsResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/prepayments.json")
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .queryParam(param -> param.key("filter[date_field]")
+                                .value((input.getFilterDateField() != null) ? input.getFilterDateField().value() : null).isRequired(false))
+                        .queryParam(param -> param.key("filter[start_date]")
+                                .value(input.getFilterStartDate()).isRequired(false))
+                        .queryParam(param -> param.key("filter[end_date]")
+                                .value(input.getFilterEndDate()).isRequired(false))
+                        .templateParam(param -> param.key("subscription_id").value(input.getSubscriptionId())
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, PrepaymentsResponse.class))
+                        .localErrorCase("401",
+                                 ErrorCase.setReason("Unauthorized",
+                                (reason, context) -> new ApiException(reason, context)))
+                        .localErrorCase("403",
+                                 ErrorCase.setReason("Forbidden",
+                                (reason, context) -> new ApiException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Credit will be removed from the subscription in the amount specified in the request body. The
+     * credit amount being deducted must be equal to or less than the current credit balance.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  body  Optional parameter: Example:
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public void deductServiceCredit(
+            final String subscriptionId,
+            final DeductServiceCreditRequest body) throws ApiException, IOException {
+        prepareDeductServiceCreditRequest(subscriptionId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for deductServiceCredit.
+     */
+    private ApiCall<Void, ApiException> prepareDeductServiceCreditRequest(
+            final String subscriptionId,
+            final DeductServiceCreditRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<Void, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/service_credit_deductions.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -116,151 +260,12 @@ public final class SubscriptionInvoiceAccountController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, CreatePrepaymentResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This request will list a subscription's prepayments.
-     * @param  input  ListPrepaymentsInput object containing request parameters
-     * @return    Returns the PrepaymentsResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public PrepaymentsResponse listPrepayments(
-            final ListPrepaymentsInput input) throws ApiException, IOException {
-        return prepareListPrepaymentsRequest(input).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for listPrepayments.
-     */
-    private ApiCall<PrepaymentsResponse, ApiException> prepareListPrepaymentsRequest(
-            final ListPrepaymentsInput input) throws IOException {
-        return new ApiCall.Builder<PrepaymentsResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/prepayments.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .queryParam(param -> param.key("filter[date_field]")
-                                .value((input.getFilterDateField() != null) ? input.getFilterDateField().value() : null).isRequired(false))
-                        .queryParam(param -> param.key("filter[start_date]")
-                                .value(input.getFilterStartDate()).isRequired(false))
-                        .queryParam(param -> param.key("filter[end_date]")
-                                .value(input.getFilterEndDate()).isRequired(false))
-                        .templateParam(param -> param.key("subscription_id").value(input.getSubscriptionId())
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, PrepaymentsResponse.class))
-                        .localErrorCase("401",
-                                 ErrorCase.setReason("Unauthorized",
-                                (reason, context) -> new ApiException(reason, context)))
-                        .localErrorCase("403",
-                                 ErrorCase.setReason("Forbidden",
-                                (reason, context) -> new ApiException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Credit will be added to the subscription in the amount specified in the request body. The
-     * credit is subsequently applied to the next generated invoice.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the ServiceCredit response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ServiceCredit issueServiceCredit(
-            final String subscriptionId,
-            final IssueServiceCreditRequest body) throws ApiException, IOException {
-        return prepareIssueServiceCreditRequest(subscriptionId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for issueServiceCredit.
-     */
-    private ApiCall<ServiceCredit, ApiException> prepareIssueServiceCreditRequest(
-            final String subscriptionId,
-            final IssueServiceCreditRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<ServiceCredit, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/service_credits.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ServiceCredit.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Credit will be removed from the subscription in the amount specified in the request body. The
-     * credit amount being deducted must be equal to or less than the current credit balance.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  body  Optional parameter: Example:
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void deductServiceCredit(
-            final String subscriptionId,
-            final DeductServiceCreditRequest body) throws ApiException, IOException {
-        prepareDeductServiceCreditRequest(subscriptionId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for deductServiceCredit.
-     */
-    private ApiCall<Void, ApiException> prepareDeductServiceCreditRequest(
-            final String subscriptionId,
-            final DeductServiceCreditRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/service_credit_deductions.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -307,7 +312,8 @@ public final class SubscriptionInvoiceAccountController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(

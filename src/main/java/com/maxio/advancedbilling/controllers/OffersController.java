@@ -69,7 +69,8 @@ public final class OffersController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -103,7 +104,8 @@ public final class OffersController extends BaseController {
                         .server(Server.ENUM_DEFAULT.value())
                         .path("/offers.json")
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -140,47 +142,12 @@ public final class OffersController extends BaseController {
                         .templateParam(param -> param.key("offer_id").value(offerId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, OfferResponse.class))
-                        .localErrorCase("401",
-                                 ErrorCase.setReason("Unauthorized",
-                                (reason, context) -> new ApiException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Archive an existing offer. Please provide an `offer_id` in order to archive the correct item.
-     * @param  offerId  Required parameter: The Chargify id of the offer
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void archiveOffer(
-            final int offerId) throws ApiException, IOException {
-        prepareArchiveOfferRequest(offerId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for archiveOffer.
-     */
-    private ApiCall<Void, ApiException> prepareArchiveOfferRequest(
-            final int offerId) throws IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/offers/{offer_id}/archive.json")
-                        .templateParam(param -> param.key("offer_id").value(offerId).isRequired(false)
-                                .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.PUT))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
                         .localErrorCase("401",
                                  ErrorCase.setReason("Unauthorized",
                                 (reason, context) -> new ApiException(reason, context)))
@@ -214,7 +181,45 @@ public final class OffersController extends BaseController {
                         .path("/offers/{offer_id}/unarchive.json")
                         .templateParam(param -> param.key("offer_id").value(offerId).isRequired(false)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.PUT))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
+                        .localErrorCase("401",
+                                 ErrorCase.setReason("Unauthorized",
+                                (reason, context) -> new ApiException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Archive an existing offer. Please provide an `offer_id` in order to archive the correct item.
+     * @param  offerId  Required parameter: The Chargify id of the offer
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public void archiveOffer(
+            final int offerId) throws ApiException, IOException {
+        prepareArchiveOfferRequest(offerId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for archiveOffer.
+     */
+    private ApiCall<Void, ApiException> prepareArchiveOfferRequest(
+            final int offerId) throws IOException {
+        return new ApiCall.Builder<Void, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/offers/{offer_id}/archive.json")
+                        .templateParam(param -> param.key("offer_id").value(offerId).isRequired(false)
+                                .shouldEncode(true))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)

@@ -10,107 +10,20 @@ CouponsController couponsController = client.getCouponsController();
 
 ## Methods
 
-* [Create Coupon](../../doc/controllers/coupons.md#create-coupon)
 * [List Coupons for Product Family](../../doc/controllers/coupons.md#list-coupons-for-product-family)
 * [Read Coupon by Code](../../doc/controllers/coupons.md#read-coupon-by-code)
-* [Read Coupon](../../doc/controllers/coupons.md#read-coupon)
-* [Update Coupon](../../doc/controllers/coupons.md#update-coupon)
-* [Archive Coupon](../../doc/controllers/coupons.md#archive-coupon)
-* [List Coupons](../../doc/controllers/coupons.md#list-coupons)
-* [Read Coupon Usage](../../doc/controllers/coupons.md#read-coupon-usage)
-* [Validate Coupon](../../doc/controllers/coupons.md#validate-coupon)
-* [Update Coupon Currency Prices](../../doc/controllers/coupons.md#update-coupon-currency-prices)
-* [Create Coupon Subcodes](../../doc/controllers/coupons.md#create-coupon-subcodes)
 * [List Coupon Subcodes](../../doc/controllers/coupons.md#list-coupon-subcodes)
 * [Update Coupon Subcodes](../../doc/controllers/coupons.md#update-coupon-subcodes)
+* [Validate Coupon](../../doc/controllers/coupons.md#validate-coupon)
+* [Update Coupon](../../doc/controllers/coupons.md#update-coupon)
+* [List Coupons](../../doc/controllers/coupons.md#list-coupons)
+* [Update Coupon Currency Prices](../../doc/controllers/coupons.md#update-coupon-currency-prices)
+* [Create Coupon Subcodes](../../doc/controllers/coupons.md#create-coupon-subcodes)
 * [Delete Coupon Subcode](../../doc/controllers/coupons.md#delete-coupon-subcode)
-
-
-# Create Coupon
-
-## Coupons Documentation
-
-Coupons can be administered in the Chargify application or created via API. Please view our section on [creating coupons](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404742830733) for more information.
-
-Additionally, for documentation on how to apply a coupon to a subscription within the Chargify UI, please see our documentation [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404761012877).
-
-## Create Coupon
-
-This request will create a coupon, based on the provided information.
-
-When creating a coupon, you must specify a product family using the `product_family_id`. If no `product_family_id` is passed, the first product family available is used. You will also need to formulate your URL to cite the Product Family ID in your request.
-
-You can restrict a coupon to only apply to specific products / components by optionally passing in hashes of `restricted_products` and/or `restricted_components` in the format:
-`{ "<product/component_id>": boolean_value }`
-
-```java
-CouponResponse createCoupon(
-    final int productFamilyId,
-    final CreateCouponBody body)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
-| `body` | [`CreateCouponBody`](../../doc/models/containers/create-coupon-body.md) | Body, Optional | This is a container for one-of cases. |
-
-## Response Type
-
-[`CouponResponse`](../../doc/models/coupon-response.md)
-
-## Example Usage
-
-```java
-int productFamilyId = 140;
-CreateCouponBody body = CreateCouponBody.fromCreateOrUpdateCoupon(
-    new CreateOrUpdateCoupon.Builder()
-        .coupon(CreateOrUpdateCouponCoupon.fromCreateOrUpdatePercentageCoupon(
-            new CreateOrUpdatePercentageCoupon.Builder(
-                "15% off",
-                "15OFF",
-                CreateOrUpdatePercentageCouponPercentage.fromMString(
-                    "15"
-                )
-            )
-            .description("15% off for life")
-            .allowNegativeBalance("false")
-            .recurring("false")
-            .endDate("2012-08-29T12:00:00-04:00")
-            .productFamilyId("2")
-            .stackable("true")
-            .compoundingStrategy(CreateOrUpdatePercentageCouponCompoundingStrategy.fromCompoundingStrategy(
-                    CompoundingStrategy.COMPOUND
-                ))
-            .excludeMidPeriodAllocations(true)
-            .applyOnCancelAtEndOfPeriod(true)
-            .build()
-        ))
-        .restrictedProducts(new LinkedHashMap<String, Boolean>() {{
-            put("1", true);
-        }})
-        .restrictedComponents(new LinkedHashMap<String, Boolean>() {{
-            put("1", true);
-            put("2", false);
-        }})
-        .build()
-);
-try {
-    CouponResponse result = couponsController.createCoupon(productFamilyId, body);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Errors
-
-| HTTP Status Code | Error Description | Exception Class |
-|  --- | --- | --- |
-| 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
+* [Create Coupon](../../doc/controllers/coupons.md#create-coupon)
+* [Read Coupon](../../doc/controllers/coupons.md#read-coupon)
+* [Archive Coupon](../../doc/controllers/coupons.md#archive-coupon)
+* [Read Coupon Usage](../../doc/controllers/coupons.md#read-coupon-usage)
 
 
 # List Coupons for Product Family
@@ -129,14 +42,14 @@ List<CouponResponse> listCouponsForProductFamily(
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
 | `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 30. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `30`<br>**Constraints**: `<= 200` |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 30. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
 | `filterDateField` | [`BasicDateField`](../../doc/models/basic-date-field.md) | Query, Optional | The type of filter you would like to apply to your search. Use in query `filter[date_field]=created_at`. |
 | `filterEndDate` | `String` | Query, Optional | The end date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp up to and including 11:59:59PM in your site’s time zone on the date specified. Use in query `filter[date_field]=2011-12-15`. |
 | `filterEndDatetime` | `String` | Query, Optional | The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. Use in query `?filter[end_datetime]=2011-12-1T10:15:30+01:00`. |
 | `filterStartDate` | `String` | Query, Optional | The start date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. Use in query `filter[start_date]=2011-12-17`. |
 | `filterStartDatetime` | `String` | Query, Optional | The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of start_date. Use in query `filter[start_datetime]=2011-12-19T10:15:30+01:00`. |
-| `filterIds` | `List<Integer>` | Query, Optional | Allows fetching coupons with matching id based on provided values. Use in query `filter[ids]=1,2,3`.<br>**Constraints**: *Minimum Items*: `1` |
+| `filterIds` | `List<Integer>` | Query, Optional | Allows fetching coupons with matching id based on provided values. Use in query `filter[ids]=1,2,3`. |
 | `filterCodes` | `List<String>` | Query, Optional | Allows fetching coupons with matching codes based on provided values. Use in query `filter[codes]=free,free_trial`. |
 | `currencyPrices` | `Boolean` | Query, Optional | When fetching coupons, if you have defined multiple currencies at the site level, you can optionally pass the `?currency_prices=true` query param to include an array of currency price data in the response. Use in query `currency_prices=true`. |
 | `filterUseSiteExchangeRate` | `Boolean` | Query, Optional | Allows fetching coupons with matching use_site_exchange_rate based on provided value. Use in query `filter[use_site_exchange_rate]=true`. |
@@ -297,40 +210,39 @@ try {
 ```
 
 
-# Read Coupon
+# List Coupon Subcodes
 
-You can retrieve the Coupon via the API with the Show method. You must identify the Coupon in this call by the ID parameter that Chargify assigns.
-If instead you would like to find a Coupon using a Coupon code, see the Coupon Find method.
-
-When fetching a coupon, if you have defined multiple currencies at the site level, you can optionally pass the `?currency_prices=true` query param to include an array of currency price data in the response.
-
-If the coupon is set to `use_site_exchange_rate: true`, it will return pricing based on the current exchange rate. If the flag is set to false, it will return all of the defined prices for each currency.
+This request allows you to request the subcodes that are attached to a coupon.
 
 ```java
-CouponResponse readCoupon(
-    final int productFamilyId,
-    final int couponId)
+CouponSubcodes listCouponSubcodes(
+    final ListCouponSubcodesInput input)
 ```
 
 ## Parameters
 
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
-| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
 | `couponId` | `int` | Template, Required | The Chargify id of the coupon |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
 
 ## Response Type
 
-[`CouponResponse`](../../doc/models/coupon-response.md)
+[`CouponSubcodes`](../../doc/models/coupon-subcodes.md)
 
 ## Example Usage
 
 ```java
-int productFamilyId = 140;
-int couponId = 162;
+ListCouponSubcodesInput listCouponSubcodesInput = new ListCouponSubcodesInput.Builder(
+    162
+)
+.page(2)
+.perPage(50)
+.build();
 
 try {
-    CouponResponse result = couponsController.readCoupon(productFamilyId, couponId);
+    CouponSubcodes result = couponsController.listCouponSubcodes(listCouponSubcodesInput);
     System.out.println(result);
 } catch (ApiException e) {
     e.printStackTrace();
@@ -343,381 +255,83 @@ try {
 
 ```json
 {
-  "coupon": {
-    "id": 67,
-    "name": "Foo Bar",
-    "code": "YEPPER99934",
-    "description": "my cool coupon",
-    "amount_in_cents": null,
-    "product_family_id": 4,
-    "product_family_name": "Billing Plans",
-    "created_at": "2017-11-08T10:01:15-05:00",
-    "updated_at": "2017-11-08T10:01:15-05:00",
-    "start_date": "2017-11-08T10:01:15-05:00",
-    "end_date": null,
-    "percentage": 33.3333,
-    "duration_period_count": null,
-    "duration_interval": null,
-    "duration_interval_unit": null,
-    "allow_negative_balance": false,
-    "archived_at": null,
-    "conversion_limit": null,
-    "stackable": true,
-    "compounding_strategy": "compound",
-    "coupon_restrictions": []
-  }
+  "codes": [
+    "3JU6PR",
+    "9RO6MP",
+    "8OG1VV",
+    "5FL7VV",
+    "2SV8XK",
+    "4LW8LH",
+    "3VL4GZ",
+    "9UI9XO",
+    "0LZ0CC",
+    "8XI9JV",
+    "9UV5YE",
+    "3UI4GX",
+    "6SL5ST",
+    "9WC8IJ",
+    "2KA3PZ",
+    "7WR1VR",
+    "3VY7MN",
+    "6KC3KB",
+    "7DF7YT",
+    "9FH1ED"
+  ]
 }
 ```
 
 
-# Update Coupon
+# Update Coupon Subcodes
 
-## Update Coupon
+You can update the subcodes for the given Coupon via the API with a PUT request to the resource endpoint.
+Send an array of new coupon subcodes.
 
-You can update a Coupon via the API with a PUT request to the resource endpoint.
+**Note**: All current subcodes for that Coupon will be deleted first, and replaced with the list of subcodes sent to this endpoint.
+The response will contain:
 
-You can restrict a coupon to only apply to specific products / components by optionally passing in hashes of `restricted_products` and/or `restricted_components` in the format:
-`{ "<product/component_id>": boolean_value }`
++ The created subcodes,
+
++ Subcodes that were not created because they already exist,
+
++ Any subcodes not created because they are invalid.
 
 ```java
-CouponResponse updateCoupon(
-    final int productFamilyId,
+CouponSubcodesResponse updateCouponSubcodes(
     final int couponId,
-    final UpdateCouponBody body)
+    final CouponSubcodes body)
 ```
 
 ## Parameters
 
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
-| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
 | `couponId` | `int` | Template, Required | The Chargify id of the coupon |
-| `body` | [`UpdateCouponBody`](../../doc/models/containers/update-coupon-body.md) | Body, Optional | This is a container for one-of cases. |
+| `body` | [`CouponSubcodes`](../../doc/models/coupon-subcodes.md) | Body, Optional | - |
 
 ## Response Type
 
-[`CouponResponse`](../../doc/models/coupon-response.md)
+[`CouponSubcodesResponse`](../../doc/models/coupon-subcodes-response.md)
 
 ## Example Usage
 
 ```java
-int productFamilyId = 140;
 int couponId = 162;
-UpdateCouponBody body = UpdateCouponBody.fromCreateOrUpdateCoupon(
-    new CreateOrUpdateCoupon.Builder()
-        .coupon(CreateOrUpdateCouponCoupon.fromCreateOrUpdatePercentageCoupon(
-            new CreateOrUpdatePercentageCoupon.Builder(
-                "15% off",
-                "15OFF",
-                CreateOrUpdatePercentageCouponPercentage.fromMString(
-                    "15"
-                )
-            )
-            .description("15% off for life")
-            .allowNegativeBalance("false")
-            .recurring("false")
-            .endDate("2012-08-29T12:00:00-04:00")
-            .productFamilyId("2")
-            .stackable("true")
-            .compoundingStrategy(CreateOrUpdatePercentageCouponCompoundingStrategy.fromCompoundingStrategy(
-                    CompoundingStrategy.COMPOUND
-                ))
-            .build()
-        ))
-        .restrictedProducts(new LinkedHashMap<String, Boolean>() {{
-            put("1", true);
-        }})
-        .restrictedComponents(new LinkedHashMap<String, Boolean>() {{
-            put("1", true);
-            put("2", false);
-        }})
-        .build()
-);
+CouponSubcodes body = new CouponSubcodes.Builder()
+    .codes(Arrays.asList(
+        "AAAA",
+        "BBBB",
+        "CCCC"
+    ))
+    .build();
+
 try {
-    CouponResponse result = couponsController.updateCoupon(productFamilyId, couponId, body);
+    CouponSubcodesResponse result = couponsController.updateCouponSubcodes(couponId, body);
     System.out.println(result);
 } catch (ApiException e) {
     e.printStackTrace();
 } catch (IOException e) {
     e.printStackTrace();
 }
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "coupon": {
-    "id": 67,
-    "name": "Foo Bar",
-    "code": "YEPPER99934",
-    "description": "my cool coupon",
-    "amount_in_cents": 10000,
-    "product_family_id": 4,
-    "created_at": "2017-11-08T10:01:15-05:00",
-    "updated_at": "2017-11-08T10:01:15-05:00",
-    "start_date": "2017-11-08T10:01:15-05:00",
-    "end_date": null,
-    "percentage": null,
-    "recurring": false,
-    "duration_period_count": null,
-    "duration_interval": null,
-    "duration_interval_unit": null,
-    "allow_negative_balance": false,
-    "archived_at": null,
-    "conversion_limit": null,
-    "stackable": true,
-    "compounding_strategy": "compound",
-    "coupon_restrictions": []
-  }
-}
-```
-
-
-# Archive Coupon
-
-You can archive a Coupon via the API with the archive method.
-Archiving makes that Coupon unavailable for future use, but allows it to remain attached and functional on existing Subscriptions that are using it.
-The `archived_at` date and time will be assigned.
-
-```java
-CouponResponse archiveCoupon(
-    final int productFamilyId,
-    final int couponId)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
-| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
-
-## Response Type
-
-[`CouponResponse`](../../doc/models/coupon-response.md)
-
-## Example Usage
-
-```java
-int productFamilyId = 140;
-int couponId = 162;
-
-try {
-    CouponResponse result = couponsController.archiveCoupon(productFamilyId, couponId);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "coupon": {
-    "id": 67,
-    "name": "Foo Bar",
-    "code": "YEPPER99934",
-    "description": "my cool coupon",
-    "amount_in_cents": 10000,
-    "product_family_id": 4,
-    "created_at": "2017-11-08T10:01:15-05:00",
-    "updated_at": "2017-11-08T10:01:15-05:00",
-    "start_date": "2017-11-08T10:01:15-05:00",
-    "end_date": null,
-    "percentage": null,
-    "recurring": false,
-    "duration_period_count": null,
-    "duration_interval": null,
-    "duration_interval_unit": null,
-    "allow_negative_balance": false,
-    "archived_at": "2016-12-02T13:09:33-05:00",
-    "conversion_limit": null,
-    "stackable": true,
-    "compounding_strategy": "compound",
-    "coupon_restrictions": []
-  }
-}
-```
-
-
-# List Coupons
-
-You can retrieve a list of coupons.
-
-If the coupon is set to `use_site_exchange_rate: true`, it will return pricing based on the current exchange rate. If the flag is set to false, it will return all of the defined prices for each currency.
-
-```java
-List<CouponResponse> listCoupons(
-    final ListCouponsInput input)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 30. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `30`<br>**Constraints**: `<= 200` |
-| `dateField` | [`BasicDateField`](../../doc/models/basic-date-field.md) | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[date_field] instead to achieve the same result. The type of filter you would like to apply to your search. |
-| `startDate` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[start_date] instead to achieve the same result. The start date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. |
-| `endDate` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[end_date] instead to achieve the same result. The end date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp up to and including 11:59:59PM in your site’s time zone on the date specified. |
-| `startDatetime` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[start_datetime] instead to achieve the same result. The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of start_date. |
-| `endDatetime` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[end_datetime] instead to achieve the same result. The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. |
-| `filterIds` | `List<Integer>` | Query, Optional | Allows fetching coupons with matching id based on provided values. Use in query `filter[ids]=1,2,3`.<br>**Constraints**: *Minimum Items*: `1` |
-| `filterCodes` | `List<String>` | Query, Optional | Allows fetching coupons with matching code based on provided values. Use in query `filter[ids]=1,2,3`.<br>**Constraints**: *Minimum Items*: `1` |
-| `currencyPrices` | `Boolean` | Query, Optional | When fetching coupons, if you have defined multiple currencies at the site level, you can optionally pass the `?currency_prices=true` query param to include an array of currency price data in the response. Use in query `currency_prices=true`. |
-| `filterEndDate` | `String` | Query, Optional | The end date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp up to and including 11:59:59PM in your site’s time zone on the date specified. Use in query `filter[end_date]=2011-12-17`. |
-| `filterEndDatetime` | `String` | Query, Optional | The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. Use in query `filter[end_datetime]=2011-12-19T10:15:30+01:00`. |
-| `filterStartDate` | `String` | Query, Optional | The start date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. Use in query `filter[start_date]=2011-12-19`. |
-| `filterStartDatetime` | `String` | Query, Optional | The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of start_date. Use in query `filter[start_datetime]=2011-12-19T10:15:30+01:00`. |
-| `filterDateField` | [`BasicDateField`](../../doc/models/basic-date-field.md) | Query, Optional | The type of filter you would like to apply to your search. Use in query `filter[date_field]=updated_at`. |
-| `filterUseSiteExchangeRate` | `Boolean` | Query, Optional | Allows fetching coupons with matching use_site_exchange_rate based on provided value. Use in query `filter[use_site_exchange_rate]=true`. |
-
-## Response Type
-
-[`List<CouponResponse>`](../../doc/models/coupon-response.md)
-
-## Example Usage
-
-```java
-ListCouponsInput listCouponsInput = new ListCouponsInput.Builder()
-    .page(2)
-    .perPage(50)
-    .dateField(BasicDateField.UPDATED_AT)
-Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')    .currencyPrices(true)
-Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')    .build();
-
-try {
-    List<CouponResponse> result = couponsController.listCoupons(listCouponsInput);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-[
-  {
-    "coupon": {
-      "id": 0,
-      "name": "string",
-      "code": "string",
-      "description": "string",
-      "amount": 0,
-      "amount_in_cents": 0,
-      "product_family_id": 0,
-      "product_family_name": "string",
-      "start_date": "string",
-      "end_date": "string",
-      "percentage": 0,
-      "recurring": true,
-      "recurring_scheme": "do_not_recur",
-      "duration_period_count": 0,
-      "duration_interval": 0,
-      "duration_interval_unit": "string",
-      "duration_interval_span": "string",
-      "allow_negative_balance": true,
-      "archived_at": "string",
-      "conversion_limit": "string",
-      "stackable": true,
-      "compounding_strategy": "compound",
-      "use_site_exchange_rate": true,
-      "created_at": "string",
-      "updated_at": "string",
-      "discount_type": "amount",
-      "exclude_mid_period_allocations": true,
-      "apply_on_cancel_at_end_of_period": true,
-      "coupon_restrictions": [
-        {
-          "id": 0,
-          "item_type": "Component",
-          "item_id": 0,
-          "name": "string",
-          "handle": "string"
-        }
-      ]
-    }
-  }
-]
-```
-
-
-# Read Coupon Usage
-
-This request will provide details about the coupon usage as an array of data hashes, one per product.
-
-```java
-List<CouponUsage> readCouponUsage(
-    final int productFamilyId,
-    final int couponId)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
-| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
-
-## Response Type
-
-[`List<CouponUsage>`](../../doc/models/coupon-usage.md)
-
-## Example Usage
-
-```java
-int productFamilyId = 140;
-int couponId = 162;
-
-try {
-    List<CouponUsage> result = couponsController.readCouponUsage(productFamilyId, couponId);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-[
-  {
-    "name": "No cost product",
-    "id": 3903594,
-    "signups": 0,
-    "savings": 0,
-    "savings_in_cents": 0,
-    "revenue": 0,
-    "revenue_in_cents": 0
-  },
-  {
-    "name": "Product that expires",
-    "id": 3853680,
-    "signups": 0,
-    "savings": 0,
-    "savings_in_cents": 0,
-    "revenue": 0,
-    "revenue_in_cents": 0
-  },
-  {
-    "name": "Trial Product",
-    "id": 3861800,
-    "signups": 1,
-    "savings": 30,
-    "savings_in_cents": 3000,
-    "revenue": 20,
-    "revenue_in_cents": 2000
-  }
-]
 ```
 
 
@@ -812,6 +426,215 @@ try {
 | HTTP Status Code | Error Description | Exception Class |
 |  --- | --- | --- |
 | 404 | Not Found | [`SingleStringErrorResponseException`](../../doc/models/single-string-error-response-exception.md) |
+
+
+# Update Coupon
+
+## Update Coupon
+
+You can update a Coupon via the API with a PUT request to the resource endpoint.
+
+You can restrict a coupon to only apply to specific products / components by optionally passing in hashes of `restricted_products` and/or `restricted_components` in the format:
+`{ "<product/component_id>": boolean_value }`
+
+```java
+CouponResponse updateCoupon(
+    final int productFamilyId,
+    final int couponId,
+    final UpdateCouponBody body)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
+| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
+| `body` | [`UpdateCouponBody`](../../doc/models/containers/update-coupon-body.md) | Body, Optional | This is a container for one-of cases. |
+
+## Response Type
+
+[`CouponResponse`](../../doc/models/coupon-response.md)
+
+## Example Usage
+
+```java
+int productFamilyId = 140;
+int couponId = 162;
+UpdateCouponBody body = UpdateCouponBody.fromCreateOrUpdateCoupon(
+    new CreateOrUpdateCoupon.Builder()
+        .coupon(CreateOrUpdateCouponCoupon.fromCreateOrUpdatePercentageCoupon(
+            new CreateOrUpdatePercentageCoupon.Builder(
+                "15% off",
+                "15OFF",
+                CreateOrUpdatePercentageCouponPercentage.fromString(
+                    "15"
+                )
+            )
+            .description("15% off for life")
+            .allowNegativeBalance("false")
+            .recurring("false")
+            .endDate("2012-08-29T12:00:00-04:00")
+            .productFamilyId("2")
+            .stackable("true")
+            .compoundingStrategy(CreateOrUpdatePercentageCouponCompoundingStrategy.fromCompoundingStrategy(
+                    CompoundingStrategy.COMPOUND
+                ))
+            .build()
+        ))
+        .restrictedProducts(new LinkedHashMap<String, Boolean>() {{
+            put("1", true);
+        }})
+        .restrictedComponents(new LinkedHashMap<String, Boolean>() {{
+            put("1", true);
+            put("2", false);
+        }})
+        .build()
+);
+try {
+    CouponResponse result = couponsController.updateCoupon(productFamilyId, couponId, body);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "coupon": {
+    "id": 67,
+    "name": "Foo Bar",
+    "code": "YEPPER99934",
+    "description": "my cool coupon",
+    "amount_in_cents": 10000,
+    "product_family_id": 4,
+    "created_at": "2017-11-08T10:01:15-05:00",
+    "updated_at": "2017-11-08T10:01:15-05:00",
+    "start_date": "2017-11-08T10:01:15-05:00",
+    "end_date": null,
+    "percentage": null,
+    "recurring": false,
+    "duration_period_count": null,
+    "duration_interval": null,
+    "duration_interval_unit": null,
+    "allow_negative_balance": false,
+    "archived_at": null,
+    "conversion_limit": null,
+    "stackable": true,
+    "compounding_strategy": "compound",
+    "coupon_restrictions": []
+  }
+}
+```
+
+
+# List Coupons
+
+You can retrieve a list of coupons.
+
+If the coupon is set to `use_site_exchange_rate: true`, it will return pricing based on the current exchange rate. If the flag is set to false, it will return all of the defined prices for each currency.
+
+```java
+List<CouponResponse> listCoupons(
+    final ListCouponsInput input)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 30. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
+| `dateField` | [`BasicDateField`](../../doc/models/basic-date-field.md) | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[date_field] instead to achieve the same result. The type of filter you would like to apply to your search. |
+| `startDate` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[start_date] instead to achieve the same result. The start date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. |
+| `endDate` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[end_date] instead to achieve the same result. The end date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp up to and including 11:59:59PM in your site’s time zone on the date specified. |
+| `startDatetime` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[start_datetime] instead to achieve the same result. The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of start_date. |
+| `endDatetime` | `String` | Query, Optional | The field was deprecated: on January 20, 2022. We recommend using filter[end_datetime] instead to achieve the same result. The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. |
+| `filterIds` | `List<Integer>` | Query, Optional | Allows fetching coupons with matching id based on provided values. Use in query `filter[ids]=1,2,3`. |
+| `filterCodes` | `List<String>` | Query, Optional | Allows fetching coupons with matching code based on provided values. Use in query `filter[ids]=1,2,3`. |
+| `currencyPrices` | `Boolean` | Query, Optional | When fetching coupons, if you have defined multiple currencies at the site level, you can optionally pass the `?currency_prices=true` query param to include an array of currency price data in the response. Use in query `currency_prices=true`. |
+| `filterEndDate` | `String` | Query, Optional | The end date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp up to and including 11:59:59PM in your site’s time zone on the date specified. Use in query `filter[end_date]=2011-12-17`. |
+| `filterEndDatetime` | `String` | Query, Optional | The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. Use in query `filter[end_datetime]=2011-12-19T10:15:30+01:00`. |
+| `filterStartDate` | `String` | Query, Optional | The start date (format YYYY-MM-DD) with which to filter the date_field. Returns coupons with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. Use in query `filter[start_date]=2011-12-19`. |
+| `filterStartDatetime` | `String` | Query, Optional | The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns coupons with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of start_date. Use in query `filter[start_datetime]=2011-12-19T10:15:30+01:00`. |
+| `filterDateField` | [`BasicDateField`](../../doc/models/basic-date-field.md) | Query, Optional | The type of filter you would like to apply to your search. Use in query `filter[date_field]=updated_at`. |
+| `filterUseSiteExchangeRate` | `Boolean` | Query, Optional | Allows fetching coupons with matching use_site_exchange_rate based on provided value. Use in query `filter[use_site_exchange_rate]=true`. |
+
+## Response Type
+
+[`List<CouponResponse>`](../../doc/models/coupon-response.md)
+
+## Example Usage
+
+```java
+ListCouponsInput listCouponsInput = new ListCouponsInput.Builder()
+    .page(2)
+    .perPage(50)
+    .dateField(BasicDateField.UPDATED_AT)
+Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')    .currencyPrices(true)
+Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')Liquid error: Value cannot be null. (Parameter 'key')    .build();
+
+try {
+    List<CouponResponse> result = couponsController.listCoupons(listCouponsInput);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+[
+  {
+    "coupon": {
+      "id": 0,
+      "name": "string",
+      "code": "string",
+      "description": "string",
+      "amount": 0,
+      "amount_in_cents": 0,
+      "product_family_id": 0,
+      "product_family_name": "string",
+      "start_date": "string",
+      "end_date": "string",
+      "percentage": 0,
+      "recurring": true,
+      "recurring_scheme": "do_not_recur",
+      "duration_period_count": 0,
+      "duration_interval": 0,
+      "duration_interval_unit": "string",
+      "duration_interval_span": "string",
+      "allow_negative_balance": true,
+      "archived_at": "string",
+      "conversion_limit": "string",
+      "stackable": true,
+      "compounding_strategy": "compound",
+      "use_site_exchange_rate": true,
+      "created_at": "string",
+      "updated_at": "string",
+      "discount_type": "amount",
+      "exclude_mid_period_allocations": true,
+      "apply_on_cancel_at_end_of_period": true,
+      "coupon_restrictions": [
+        {
+          "id": 0,
+          "item_type": "Component",
+          "item_id": 0,
+          "name": "string",
+          "handle": "string"
+        }
+      ]
+    }
+  }
+]
+```
 
 
 # Update Coupon Currency Prices
@@ -965,131 +788,6 @@ try {
 ```
 
 
-# List Coupon Subcodes
-
-This request allows you to request the subcodes that are attached to a coupon.
-
-```java
-CouponSubcodes listCouponSubcodes(
-    final ListCouponSubcodesInput input)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
-
-## Response Type
-
-[`CouponSubcodes`](../../doc/models/coupon-subcodes.md)
-
-## Example Usage
-
-```java
-ListCouponSubcodesInput listCouponSubcodesInput = new ListCouponSubcodesInput.Builder(
-    162
-)
-.page(2)
-.perPage(50)
-.build();
-
-try {
-    CouponSubcodes result = couponsController.listCouponSubcodes(listCouponSubcodesInput);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "codes": [
-    "3JU6PR",
-    "9RO6MP",
-    "8OG1VV",
-    "5FL7VV",
-    "2SV8XK",
-    "4LW8LH",
-    "3VL4GZ",
-    "9UI9XO",
-    "0LZ0CC",
-    "8XI9JV",
-    "9UV5YE",
-    "3UI4GX",
-    "6SL5ST",
-    "9WC8IJ",
-    "2KA3PZ",
-    "7WR1VR",
-    "3VY7MN",
-    "6KC3KB",
-    "7DF7YT",
-    "9FH1ED"
-  ]
-}
-```
-
-
-# Update Coupon Subcodes
-
-You can update the subcodes for the given Coupon via the API with a PUT request to the resource endpoint.
-Send an array of new coupon subcodes.
-
-**Note**: All current subcodes for that Coupon will be deleted first, and replaced with the list of subcodes sent to this endpoint.
-The response will contain:
-
-+ The created subcodes,
-
-+ Subcodes that were not created because they already exist,
-
-+ Any subcodes not created because they are invalid.
-
-```java
-CouponSubcodesResponse updateCouponSubcodes(
-    final int couponId,
-    final CouponSubcodes body)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
-| `body` | [`CouponSubcodes`](../../doc/models/coupon-subcodes.md) | Body, Optional | - |
-
-## Response Type
-
-[`CouponSubcodesResponse`](../../doc/models/coupon-subcodes-response.md)
-
-## Example Usage
-
-```java
-int couponId = 162;
-CouponSubcodes body = new CouponSubcodes.Builder()
-    .codes(Arrays.asList(
-        "AAAA",
-        "BBBB",
-        "CCCC"
-    ))
-    .build();
-
-try {
-    CouponSubcodesResponse result = couponsController.updateCouponSubcodes(couponId, body);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-
 # Delete Coupon Subcode
 
 ## Example
@@ -1152,4 +850,306 @@ try {
 | HTTP Status Code | Error Description | Exception Class |
 |  --- | --- | --- |
 | 404 | Not Found | `ApiException` |
+
+
+# Create Coupon
+
+## Coupons Documentation
+
+Coupons can be administered in the Chargify application or created via API. Please view our section on [creating coupons](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404742830733) for more information.
+
+Additionally, for documentation on how to apply a coupon to a subscription within the Chargify UI, please see our documentation [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404761012877).
+
+## Create Coupon
+
+This request will create a coupon, based on the provided information.
+
+When creating a coupon, you must specify a product family using the `product_family_id`. If no `product_family_id` is passed, the first product family available is used. You will also need to formulate your URL to cite the Product Family ID in your request.
+
+You can restrict a coupon to only apply to specific products / components by optionally passing in hashes of `restricted_products` and/or `restricted_components` in the format:
+`{ "<product/component_id>": boolean_value }`
+
+```java
+CouponResponse createCoupon(
+    final int productFamilyId,
+    final CreateCouponBody body)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
+| `body` | [`CreateCouponBody`](../../doc/models/containers/create-coupon-body.md) | Body, Optional | This is a container for one-of cases. |
+
+## Response Type
+
+[`CouponResponse`](../../doc/models/coupon-response.md)
+
+## Example Usage
+
+```java
+int productFamilyId = 140;
+CreateCouponBody body = CreateCouponBody.fromCreateOrUpdateCoupon(
+    new CreateOrUpdateCoupon.Builder()
+        .coupon(CreateOrUpdateCouponCoupon.fromCreateOrUpdatePercentageCoupon(
+            new CreateOrUpdatePercentageCoupon.Builder(
+                "15% off",
+                "15OFF",
+                CreateOrUpdatePercentageCouponPercentage.fromString(
+                    "15"
+                )
+            )
+            .description("15% off for life")
+            .allowNegativeBalance("false")
+            .recurring("false")
+            .endDate("2012-08-29T12:00:00-04:00")
+            .productFamilyId("2")
+            .stackable("true")
+            .compoundingStrategy(CreateOrUpdatePercentageCouponCompoundingStrategy.fromCompoundingStrategy(
+                    CompoundingStrategy.COMPOUND
+                ))
+            .excludeMidPeriodAllocations(true)
+            .applyOnCancelAtEndOfPeriod(true)
+            .build()
+        ))
+        .restrictedProducts(new LinkedHashMap<String, Boolean>() {{
+            put("1", true);
+        }})
+        .restrictedComponents(new LinkedHashMap<String, Boolean>() {{
+            put("1", true);
+            put("2", false);
+        }})
+        .build()
+);
+try {
+    CouponResponse result = couponsController.createCoupon(productFamilyId, body);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Errors
+
+| HTTP Status Code | Error Description | Exception Class |
+|  --- | --- | --- |
+| 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
+
+
+# Read Coupon
+
+You can retrieve the Coupon via the API with the Show method. You must identify the Coupon in this call by the ID parameter that Chargify assigns.
+If instead you would like to find a Coupon using a Coupon code, see the Coupon Find method.
+
+When fetching a coupon, if you have defined multiple currencies at the site level, you can optionally pass the `?currency_prices=true` query param to include an array of currency price data in the response.
+
+If the coupon is set to `use_site_exchange_rate: true`, it will return pricing based on the current exchange rate. If the flag is set to false, it will return all of the defined prices for each currency.
+
+```java
+CouponResponse readCoupon(
+    final int productFamilyId,
+    final int couponId)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
+| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
+
+## Response Type
+
+[`CouponResponse`](../../doc/models/coupon-response.md)
+
+## Example Usage
+
+```java
+int productFamilyId = 140;
+int couponId = 162;
+
+try {
+    CouponResponse result = couponsController.readCoupon(productFamilyId, couponId);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "coupon": {
+    "id": 67,
+    "name": "Foo Bar",
+    "code": "YEPPER99934",
+    "description": "my cool coupon",
+    "amount_in_cents": null,
+    "product_family_id": 4,
+    "product_family_name": "Billing Plans",
+    "created_at": "2017-11-08T10:01:15-05:00",
+    "updated_at": "2017-11-08T10:01:15-05:00",
+    "start_date": "2017-11-08T10:01:15-05:00",
+    "end_date": null,
+    "percentage": 33.3333,
+    "duration_period_count": null,
+    "duration_interval": null,
+    "duration_interval_unit": null,
+    "allow_negative_balance": false,
+    "archived_at": null,
+    "conversion_limit": null,
+    "stackable": true,
+    "compounding_strategy": "compound",
+    "coupon_restrictions": []
+  }
+}
+```
+
+
+# Archive Coupon
+
+You can archive a Coupon via the API with the archive method.
+Archiving makes that Coupon unavailable for future use, but allows it to remain attached and functional on existing Subscriptions that are using it.
+The `archived_at` date and time will be assigned.
+
+```java
+CouponResponse archiveCoupon(
+    final int productFamilyId,
+    final int couponId)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
+| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
+
+## Response Type
+
+[`CouponResponse`](../../doc/models/coupon-response.md)
+
+## Example Usage
+
+```java
+int productFamilyId = 140;
+int couponId = 162;
+
+try {
+    CouponResponse result = couponsController.archiveCoupon(productFamilyId, couponId);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "coupon": {
+    "id": 67,
+    "name": "Foo Bar",
+    "code": "YEPPER99934",
+    "description": "my cool coupon",
+    "amount_in_cents": 10000,
+    "product_family_id": 4,
+    "created_at": "2017-11-08T10:01:15-05:00",
+    "updated_at": "2017-11-08T10:01:15-05:00",
+    "start_date": "2017-11-08T10:01:15-05:00",
+    "end_date": null,
+    "percentage": null,
+    "recurring": false,
+    "duration_period_count": null,
+    "duration_interval": null,
+    "duration_interval_unit": null,
+    "allow_negative_balance": false,
+    "archived_at": "2016-12-02T13:09:33-05:00",
+    "conversion_limit": null,
+    "stackable": true,
+    "compounding_strategy": "compound",
+    "coupon_restrictions": []
+  }
+}
+```
+
+
+# Read Coupon Usage
+
+This request will provide details about the coupon usage as an array of data hashes, one per product.
+
+```java
+List<CouponUsage> readCouponUsage(
+    final int productFamilyId,
+    final int couponId)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `productFamilyId` | `int` | Template, Required | The Chargify id of the product family to which the coupon belongs |
+| `couponId` | `int` | Template, Required | The Chargify id of the coupon |
+
+## Response Type
+
+[`List<CouponUsage>`](../../doc/models/coupon-usage.md)
+
+## Example Usage
+
+```java
+int productFamilyId = 140;
+int couponId = 162;
+
+try {
+    List<CouponUsage> result = couponsController.readCouponUsage(productFamilyId, couponId);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+[
+  {
+    "name": "No cost product",
+    "id": 3903594,
+    "signups": 0,
+    "savings": 0,
+    "savings_in_cents": 0,
+    "revenue": 0,
+    "revenue_in_cents": 0
+  },
+  {
+    "name": "Product that expires",
+    "id": 3853680,
+    "signups": 0,
+    "savings": 0,
+    "savings_in_cents": 0,
+    "revenue": 0,
+    "revenue_in_cents": 0
+  },
+  {
+    "name": "Trial Product",
+    "id": 3861800,
+    "signups": 1,
+    "savings": 30,
+    "savings_in_cents": 3000,
+    "revenue": 20,
+    "revenue_in_cents": 2000
+  }
+]
+```
 

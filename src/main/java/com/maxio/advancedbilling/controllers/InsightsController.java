@@ -39,41 +39,6 @@ public final class InsightsController extends BaseController {
     }
 
     /**
-     * The Stats API is a very basic view of some Site-level stats. This API call only answers with
-     * JSON responses. An XML version is not provided. ## Stats Documentation There currently is not
-     * a complimentary matching set of documentation that compliments this endpoint. However, each
-     * Site's dashboard will reflect the summary of information provided in the Stats reposnse. ```
-     * https://subdomain.chargify.com/dashboard ```.
-     * @return    Returns the SiteSummary response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public SiteSummary readSiteStats() throws ApiException, IOException {
-        return prepareReadSiteStatsRequest().execute();
-    }
-
-    /**
-     * Builds the ApiCall object for readSiteStats.
-     */
-    private ApiCall<SiteSummary, ApiException> prepareReadSiteStatsRequest() throws IOException {
-        return new ApiCall.Builder<SiteSummary, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/stats.json")
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, SiteSummary.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
      * This endpoint returns your site's current MRR, including plan and usage breakouts.
      * @deprecated
      * 
@@ -108,11 +73,48 @@ public final class InsightsController extends BaseController {
                         .queryParam(param -> param.key("subscription_id")
                                 .value(subscriptionId).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, MRRResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * The Stats API is a very basic view of some Site-level stats. This API call only answers with
+     * JSON responses. An XML version is not provided. ## Stats Documentation There currently is not
+     * a complimentary matching set of documentation that compliments this endpoint. However, each
+     * Site's dashboard will reflect the summary of information provided in the Stats reposnse. ```
+     * https://subdomain.chargify.com/dashboard ```.
+     * @return    Returns the SiteSummary response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public SiteSummary readSiteStats() throws ApiException, IOException {
+        return prepareReadSiteStatsRequest().execute();
+    }
+
+    /**
+     * Builds the ApiCall object for readSiteStats.
+     */
+    private ApiCall<SiteSummary, ApiException> prepareReadSiteStatsRequest() throws IOException {
+        return new ApiCall.Builder<SiteSummary, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/stats.json")
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, SiteSummary.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -165,7 +167,8 @@ public final class InsightsController extends BaseController {
                         .queryParam(param -> param.key("direction")
                                 .value((input.getDirection() != null) ? input.getDirection().value() : null).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -213,7 +216,8 @@ public final class InsightsController extends BaseController {
                         .queryParam(param -> param.key("direction")
                                 .value((input.getDirection() != null) ? input.getDirection().value() : null).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(

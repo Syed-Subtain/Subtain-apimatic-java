@@ -81,7 +81,8 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -102,50 +103,51 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
     }
 
     /**
-     * This endpoint allows you to fetch Segments created for a given Price Point. They will be
-     * returned in the order of creation. You can pass `page` and `per_page` parameters in order to
-     * access all of the segments. By default it will return `30` records. You can set `per_page` to
-     * `200` at most. You may specify component and/or price point by using either the numeric ID or
-     * the `handle:gold` syntax.
-     * @param  input  ListSegmentsForPricePointInput object containing request parameters
+     * This endpoint allows you to update multiple segments in one request. The array of segments
+     * can contain up to `1000` records. If any of the records contain an error the whole request
+     * would fail and none of the requested segments get updated. The error response contains a
+     * message for only the one segment that failed validation, with the corresponding index in the
+     * array. You may specify component and/or price point by using either the numeric ID or the
+     * `handle:gold` syntax.
+     * @param  componentId  Required parameter: ID or Handle for the Component
+     * @param  pricePointId  Required parameter: ID or Handle for the Price Point belonging to the
+     *         Component
+     * @param  body  Optional parameter: Example:
      * @return    Returns the ListSegmentsResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public ListSegmentsResponse listSegmentsForPricePoint(
-            final ListSegmentsForPricePointInput input) throws ApiException, IOException {
-        return prepareListSegmentsForPricePointRequest(input).execute();
+    public ListSegmentsResponse updateSegments(
+            final String componentId,
+            final String pricePointId,
+            final BulkUpdateSegments body) throws ApiException, IOException {
+        return prepareUpdateSegmentsRequest(componentId, pricePointId, body).execute();
     }
 
     /**
-     * Builds the ApiCall object for listSegmentsForPricePoint.
+     * Builds the ApiCall object for updateSegments.
      */
-    private ApiCall<ListSegmentsResponse, ApiException> prepareListSegmentsForPricePointRequest(
-            final ListSegmentsForPricePointInput input) throws IOException {
+    private ApiCall<ListSegmentsResponse, ApiException> prepareUpdateSegmentsRequest(
+            final String componentId,
+            final String pricePointId,
+            final BulkUpdateSegments body) throws JsonProcessingException, IOException {
         return new ApiCall.Builder<ListSegmentsResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/components/{component_id}/price_points/{price_point_id}/segments.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .queryParam(param -> param.key("filter[segment_property_1_value]")
-                                .value(input.getFilterSegmentProperty1Value()).isRequired(false))
-                        .queryParam(param -> param.key("filter[segment_property_2_value]")
-                                .value(input.getFilterSegmentProperty2Value()).isRequired(false))
-                        .queryParam(param -> param.key("filter[segment_property_3_value]")
-                                .value(input.getFilterSegmentProperty3Value()).isRequired(false))
-                        .queryParam(param -> param.key("filter[segment_property_4_value]")
-                                .value(input.getFilterSegmentProperty4Value()).isRequired(false))
-                        .templateParam(param -> param.key("component_id").value(input.getComponentId())
+                        .path("/components/{component_id}/price_points/{price_point_id}/segments/bulk.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("component_id").value(componentId)
                                 .shouldEncode(true))
-                        .templateParam(param -> param.key("price_point_id").value(input.getPricePointId())
+                        .templateParam(param -> param.key("price_point_id").value(pricePointId)
                                 .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, ListSegmentsResponse.class))
@@ -157,7 +159,7 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
                                 (reason, context) -> new ApiException(reason, context)))
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new EventBasedBillingListSegmentsErrorsException(reason, context)))
+                                (reason, context) -> new EventBasedBillingSegmentException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -209,7 +211,8 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -264,7 +267,8 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
                                 .shouldEncode(true))
                         .templateParam(param -> param.key("id").value(id).isRequired(false)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)
@@ -329,7 +333,8 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -350,50 +355,51 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
     }
 
     /**
-     * This endpoint allows you to update multiple segments in one request. The array of segments
-     * can contain up to `1000` records. If any of the records contain an error the whole request
-     * would fail and none of the requested segments get updated. The error response contains a
-     * message for only the one segment that failed validation, with the corresponding index in the
-     * array. You may specify component and/or price point by using either the numeric ID or the
-     * `handle:gold` syntax.
-     * @param  componentId  Required parameter: ID or Handle for the Component
-     * @param  pricePointId  Required parameter: ID or Handle for the Price Point belonging to the
-     *         Component
-     * @param  body  Optional parameter: Example:
+     * This endpoint allows you to fetch Segments created for a given Price Point. They will be
+     * returned in the order of creation. You can pass `page` and `per_page` parameters in order to
+     * access all of the segments. By default it will return `30` records. You can set `per_page` to
+     * `200` at most. You may specify component and/or price point by using either the numeric ID or
+     * the `handle:gold` syntax.
+     * @param  input  ListSegmentsForPricePointInput object containing request parameters
      * @return    Returns the ListSegmentsResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public ListSegmentsResponse updateSegments(
-            final String componentId,
-            final String pricePointId,
-            final BulkUpdateSegments body) throws ApiException, IOException {
-        return prepareUpdateSegmentsRequest(componentId, pricePointId, body).execute();
+    public ListSegmentsResponse listSegmentsForPricePoint(
+            final ListSegmentsForPricePointInput input) throws ApiException, IOException {
+        return prepareListSegmentsForPricePointRequest(input).execute();
     }
 
     /**
-     * Builds the ApiCall object for updateSegments.
+     * Builds the ApiCall object for listSegmentsForPricePoint.
      */
-    private ApiCall<ListSegmentsResponse, ApiException> prepareUpdateSegmentsRequest(
-            final String componentId,
-            final String pricePointId,
-            final BulkUpdateSegments body) throws JsonProcessingException, IOException {
+    private ApiCall<ListSegmentsResponse, ApiException> prepareListSegmentsForPricePointRequest(
+            final ListSegmentsForPricePointInput input) throws IOException {
         return new ApiCall.Builder<ListSegmentsResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/components/{component_id}/price_points/{price_point_id}/segments/bulk.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("component_id").value(componentId)
+                        .path("/components/{component_id}/price_points/{price_point_id}/segments.json")
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .queryParam(param -> param.key("filter[segment_property_1_value]")
+                                .value(input.getFilterSegmentProperty1Value()).isRequired(false))
+                        .queryParam(param -> param.key("filter[segment_property_2_value]")
+                                .value(input.getFilterSegmentProperty2Value()).isRequired(false))
+                        .queryParam(param -> param.key("filter[segment_property_3_value]")
+                                .value(input.getFilterSegmentProperty3Value()).isRequired(false))
+                        .queryParam(param -> param.key("filter[segment_property_4_value]")
+                                .value(input.getFilterSegmentProperty4Value()).isRequired(false))
+                        .templateParam(param -> param.key("component_id").value(input.getComponentId())
                                 .shouldEncode(true))
-                        .templateParam(param -> param.key("price_point_id").value(pricePointId)
+                        .templateParam(param -> param.key("price_point_id").value(input.getPricePointId())
                                 .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.PUT))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, ListSegmentsResponse.class))
@@ -405,7 +411,7 @@ public final class EventsBasedBillingSegmentsController extends BaseController {
                                 (reason, context) -> new ApiException(reason, context)))
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new EventBasedBillingSegmentException(reason, context)))
+                                (reason, context) -> new EventBasedBillingListSegmentsErrorsException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

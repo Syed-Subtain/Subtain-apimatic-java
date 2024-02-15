@@ -35,43 +35,45 @@ public final class SubscriptionNotesController extends BaseController {
     }
 
     /**
-     * Use the following method to create a note for a subscription. ## How to Use Subscription
-     * Notes Notes allow you to record information about a particular Subscription in a free text
-     * format. If you have structured data such as birth date, color, etc., consider using Metadata
-     * instead. Full documentation on how to use Notes in the Chargify UI can be located
-     * [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404434903181-Subscription-Summary#notes).
+     * Use the following method to update a note for a Subscription.
      * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  noteId  Required parameter: The Chargify id of the note
      * @param  body  Optional parameter: Example:
      * @return    Returns the SubscriptionNoteResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public SubscriptionNoteResponse createSubscriptionNote(
+    public SubscriptionNoteResponse updateSubscriptionNote(
             final String subscriptionId,
+            final String noteId,
             final UpdateSubscriptionNoteRequest body) throws ApiException, IOException {
-        return prepareCreateSubscriptionNoteRequest(subscriptionId, body).execute();
+        return prepareUpdateSubscriptionNoteRequest(subscriptionId, noteId, body).execute();
     }
 
     /**
-     * Builds the ApiCall object for createSubscriptionNote.
+     * Builds the ApiCall object for updateSubscriptionNote.
      */
-    private ApiCall<SubscriptionNoteResponse, ApiException> prepareCreateSubscriptionNoteRequest(
+    private ApiCall<SubscriptionNoteResponse, ApiException> prepareUpdateSubscriptionNoteRequest(
             final String subscriptionId,
+            final String noteId,
             final UpdateSubscriptionNoteRequest body) throws JsonProcessingException, IOException {
         return new ApiCall.Builder<SubscriptionNoteResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/notes.json")
+                        .path("/subscriptions/{subscription_id}/notes/{note_id}.json")
                         .bodyParam(param -> param.value(body).isRequired(false))
                         .bodySerializer(() ->  ApiHelper.serialize(body))
                         .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
+                        .templateParam(param -> param.key("note_id").value(noteId)
+                                .shouldEncode(true))
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, SubscriptionNoteResponse.class))
@@ -104,7 +106,8 @@ public final class SubscriptionNotesController extends BaseController {
                         .path("/subscriptions/{subscription_id}/notes.json")
                         .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)
@@ -147,7 +150,8 @@ public final class SubscriptionNotesController extends BaseController {
                         .templateParam(param -> param.key("subscription_id").value(input.getSubscriptionId())
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -190,7 +194,8 @@ public final class SubscriptionNotesController extends BaseController {
                         .templateParam(param -> param.key("note_id").value(noteId)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -202,44 +207,44 @@ public final class SubscriptionNotesController extends BaseController {
     }
 
     /**
-     * Use the following method to update a note for a Subscription.
+     * Use the following method to create a note for a subscription. ## How to Use Subscription
+     * Notes Notes allow you to record information about a particular Subscription in a free text
+     * format. If you have structured data such as birth date, color, etc., consider using Metadata
+     * instead. Full documentation on how to use Notes in the Chargify UI can be located
+     * [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404434903181-Subscription-Summary#notes).
      * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  noteId  Required parameter: The Chargify id of the note
      * @param  body  Optional parameter: Example:
      * @return    Returns the SubscriptionNoteResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public SubscriptionNoteResponse updateSubscriptionNote(
+    public SubscriptionNoteResponse createSubscriptionNote(
             final String subscriptionId,
-            final String noteId,
             final UpdateSubscriptionNoteRequest body) throws ApiException, IOException {
-        return prepareUpdateSubscriptionNoteRequest(subscriptionId, noteId, body).execute();
+        return prepareCreateSubscriptionNoteRequest(subscriptionId, body).execute();
     }
 
     /**
-     * Builds the ApiCall object for updateSubscriptionNote.
+     * Builds the ApiCall object for createSubscriptionNote.
      */
-    private ApiCall<SubscriptionNoteResponse, ApiException> prepareUpdateSubscriptionNoteRequest(
+    private ApiCall<SubscriptionNoteResponse, ApiException> prepareCreateSubscriptionNoteRequest(
             final String subscriptionId,
-            final String noteId,
             final UpdateSubscriptionNoteRequest body) throws JsonProcessingException, IOException {
         return new ApiCall.Builder<SubscriptionNoteResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/notes/{note_id}.json")
+                        .path("/subscriptions/{subscription_id}/notes.json")
                         .bodyParam(param -> param.value(body).isRequired(false))
                         .bodySerializer(() ->  ApiHelper.serialize(body))
                         .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
-                        .templateParam(param -> param.key("note_id").value(noteId)
-                                .shouldEncode(true))
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.PUT))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, SubscriptionNoteResponse.class))

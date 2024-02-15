@@ -13,8 +13,8 @@ OffersController offersController = client.getOffersController();
 * [Create Offer](../../doc/controllers/offers.md#create-offer)
 * [List Offers](../../doc/controllers/offers.md#list-offers)
 * [Read Offers](../../doc/controllers/offers.md#read-offers)
-* [Archive Offer](../../doc/controllers/offers.md#archive-offer)
 * [Unarchive Offer](../../doc/controllers/offers.md#unarchive-offer)
+* [Archive Offer](../../doc/controllers/offers.md#archive-offer)
 
 
 # Create Offer
@@ -253,46 +253,6 @@ try {
 | 401 | Unauthorized | `ApiException` |
 
 
-# Archive Offer
-
-Archive an existing offer. Please provide an `offer_id` in order to archive the correct item.
-
-```java
-Void archiveOffer(
-    final int offerId)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `offerId` | `int` | Template, Required | The Chargify id of the offer |
-
-## Response Type
-
-`void`
-
-## Example Usage
-
-```java
-int offerId = 130;
-
-try {
-    offersController.archiveOffer(offerId);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Errors
-
-| HTTP Status Code | Error Description | Exception Class |
-|  --- | --- | --- |
-| 401 | Unauthorized | `ApiException` |
-
-
 # Unarchive Offer
 
 Unarchive a previously archived offer. Please provide an `offer_id` in order to un-archive the correct item.
@@ -319,6 +279,46 @@ int offerId = 130;
 
 try {
     offersController.unarchiveOffer(offerId);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Errors
+
+| HTTP Status Code | Error Description | Exception Class |
+|  --- | --- | --- |
+| 401 | Unauthorized | `ApiException` |
+
+
+# Archive Offer
+
+Archive an existing offer. Please provide an `offer_id` in order to archive the correct item.
+
+```java
+Void archiveOffer(
+    final int offerId)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `offerId` | `int` | Template, Required | The Chargify id of the offer |
+
+## Response Type
+
+`void`
+
+## Example Usage
+
+```java
+int offerId = 130;
+
+try {
+    offersController.archiveOffer(offerId);
 } catch (ApiException e) {
     e.printStackTrace();
 } catch (IOException e) {

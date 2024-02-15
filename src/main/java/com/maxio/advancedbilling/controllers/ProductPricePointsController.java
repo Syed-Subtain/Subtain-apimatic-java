@@ -46,6 +46,51 @@ public final class ProductPricePointsController extends BaseController {
     }
 
     /**
+     * Use this endpoint to retrieve a list of product price points.
+     * @param  input  ListProductPricePointsInput object containing request parameters
+     * @return    Returns the ListProductPricePointsResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ListProductPricePointsResponse listProductPricePoints(
+            final ListProductPricePointsInput input) throws ApiException, IOException {
+        return prepareListProductPricePointsRequest(input).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listProductPricePoints.
+     */
+    private ApiCall<ListProductPricePointsResponse, ApiException> prepareListProductPricePointsRequest(
+            final ListProductPricePointsInput input) throws IOException {
+        return new ApiCall.Builder<ListProductPricePointsResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/products/{product_id}/price_points.json")
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .queryParam(param -> param.key("currency_prices")
+                                .value(input.getCurrencyPrices()).isRequired(false))
+                        .queryParam(param -> param.key("filter[type]")
+                                .value(PricePointType.toValue(input.getFilterType())).isRequired(false))
+                        .templateParam(param -> param.key("product_id").value(input.getProductId()).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ListProductPricePointsResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
      * [Product Price Point
      * Documentation](https://chargify.zendesk.com/hc/en-us/articles/4407755824155).
      * @param  productId  Required parameter: The id or handle of the product. When using the
@@ -79,55 +124,12 @@ public final class ProductPricePointsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Use this endpoint to retrieve a list of product price points.
-     * @param  input  ListProductPricePointsInput object containing request parameters
-     * @return    Returns the ListProductPricePointsResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ListProductPricePointsResponse listProductPricePoints(
-            final ListProductPricePointsInput input) throws ApiException, IOException {
-        return prepareListProductPricePointsRequest(input).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for listProductPricePoints.
-     */
-    private ApiCall<ListProductPricePointsResponse, ApiException> prepareListProductPricePointsRequest(
-            final ListProductPricePointsInput input) throws IOException {
-        return new ApiCall.Builder<ListProductPricePointsResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/products/{product_id}/price_points.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .queryParam(param -> param.key("currency_prices")
-                                .value(input.getCurrencyPrices()).isRequired(false))
-                        .queryParam(param -> param.key("filter[type]")
-                                .value(PricePointType.toValue(input.getFilterType())).isRequired(false))
-                        .templateParam(param -> param.key("product_id").value(input.getProductId()).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ListProductPricePointsResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -174,105 +176,9 @@ public final class ProductPricePointsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Use this endpoint to retrieve details for a specific product price point.
-     * @param  productId  Required parameter: The id or handle of the product. When using the
-     *         handle, it must be prefixed with `handle:`
-     * @param  pricePointId  Required parameter: The id or handle of the price point. When using the
-     *         handle, it must be prefixed with `handle:`
-     * @param  currencyPrices  Optional parameter: When fetching a product's price points, if you
-     *         have defined multiple currencies at the site level, you can optionally pass the
-     *         ?currency_prices=true query param to include an array of currency price data in the
-     *         response. If the product price point is set to use_site_exchange_rate: true, it will
-     *         return pricing based on the current exchange rate. If the flag is set to false, it
-     *         will return all of the defined prices for each currency.
-     * @return    Returns the ProductPricePointResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ProductPricePointResponse readProductPricePoint(
-            final int productId,
-            final int pricePointId,
-            final Boolean currencyPrices) throws ApiException, IOException {
-        return prepareReadProductPricePointRequest(productId, pricePointId,
-                currencyPrices).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for readProductPricePoint.
-     */
-    private ApiCall<ProductPricePointResponse, ApiException> prepareReadProductPricePointRequest(
-            final int productId,
-            final int pricePointId,
-            final Boolean currencyPrices) throws IOException {
-        return new ApiCall.Builder<ProductPricePointResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/products/{product_id}/price_points/{price_point_id}.json")
-                        .queryParam(param -> param.key("currency_prices")
-                                .value(currencyPrices).isRequired(false))
-                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("price_point_id").value(pricePointId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Use this endpoint to archive a product price point.
-     * @param  productId  Required parameter: The id or handle of the product. When using the
-     *         handle, it must be prefixed with `handle:`
-     * @param  pricePointId  Required parameter: The id or handle of the price point. When using the
-     *         handle, it must be prefixed with `handle:`
-     * @return    Returns the ProductPricePointResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ProductPricePointResponse archiveProductPricePoint(
-            final int productId,
-            final int pricePointId) throws ApiException, IOException {
-        return prepareArchiveProductPricePointRequest(productId, pricePointId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for archiveProductPricePoint.
-     */
-    private ApiCall<ProductPricePointResponse, ApiException> prepareArchiveProductPricePointRequest(
-            final int productId,
-            final int pricePointId) throws IOException {
-        return new ApiCall.Builder<ProductPricePointResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/products/{product_id}/price_points/{price_point_id}.json")
-                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("price_point_id").value(pricePointId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
@@ -313,50 +219,8 @@ public final class ProductPricePointsController extends BaseController {
                         .templateParam(param -> param.key("price_point_id").value(pricePointId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.PATCH))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Use this endpoint to make a product price point the default for the product. Note: Custom
-     * product price points are not able to be set as the default for a product.
-     * @param  productId  Required parameter: The Chargify id of the product to which the price
-     *         point belongs
-     * @param  pricePointId  Required parameter: The Chargify id of the product price point
-     * @return    Returns the ProductPricePointResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ProductPricePointResponse setDefaultPricePointForProduct(
-            final int productId,
-            final int pricePointId) throws ApiException, IOException {
-        return prepareSetDefaultPricePointForProductRequest(productId, pricePointId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for setDefaultPricePointForProduct.
-     */
-    private ApiCall<ProductPricePointResponse, ApiException> prepareSetDefaultPricePointForProductRequest(
-            final int productId,
-            final int pricePointId) throws IOException {
-        return new ApiCall.Builder<ProductPricePointResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/products/{product_id}/price_points/{price_point_id}/default.json")
-                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("price_point_id").value(pricePointId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PATCH))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -400,7 +264,8 @@ public final class ProductPricePointsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -447,7 +312,8 @@ public final class ProductPricePointsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -455,6 +321,94 @@ public final class ProductPricePointsController extends BaseController {
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new ErrorMapResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Use this endpoint to archive a product price point.
+     * @param  productId  Required parameter: The id or handle of the product. When using the
+     *         handle, it must be prefixed with `handle:`
+     * @param  pricePointId  Required parameter: The id or handle of the price point. When using the
+     *         handle, it must be prefixed with `handle:`
+     * @return    Returns the ProductPricePointResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ProductPricePointResponse archiveProductPricePoint(
+            final int productId,
+            final int pricePointId) throws ApiException, IOException {
+        return prepareArchiveProductPricePointRequest(productId, pricePointId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for archiveProductPricePoint.
+     */
+    private ApiCall<ProductPricePointResponse, ApiException> prepareArchiveProductPricePointRequest(
+            final int productId,
+            final int pricePointId) throws IOException {
+        return new ApiCall.Builder<ProductPricePointResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/products/{product_id}/price_points/{price_point_id}.json")
+                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("price_point_id").value(pricePointId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Use this endpoint to make a product price point the default for the product. Note: Custom
+     * product price points are not able to be set as the default for a product.
+     * @param  productId  Required parameter: The Chargify id of the product to which the price
+     *         point belongs
+     * @param  pricePointId  Required parameter: The Chargify id of the product price point
+     * @return    Returns the ProductPricePointResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ProductPricePointResponse setDefaultPricePointForProduct(
+            final int productId,
+            final int pricePointId) throws ApiException, IOException {
+        return prepareSetDefaultPricePointForProductRequest(productId, pricePointId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for setDefaultPricePointForProduct.
+     */
+    private ApiCall<ProductPricePointResponse, ApiException> prepareSetDefaultPricePointForProductRequest(
+            final int productId,
+            final int pricePointId) throws IOException {
+        return new ApiCall.Builder<ProductPricePointResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/products/{product_id}/price_points/{price_point_id}/default.json")
+                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("price_point_id").value(pricePointId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.PATCH))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -497,7 +451,8 @@ public final class ProductPricePointsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -556,7 +511,8 @@ public final class ProductPricePointsController extends BaseController {
                         .queryParam(param -> param.key("per_page")
                                 .value(input.getPerPage()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -564,6 +520,61 @@ public final class ProductPricePointsController extends BaseController {
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new ErrorListResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Use this endpoint to retrieve details for a specific product price point.
+     * @param  productId  Required parameter: The id or handle of the product. When using the
+     *         handle, it must be prefixed with `handle:`
+     * @param  pricePointId  Required parameter: The id or handle of the price point. When using the
+     *         handle, it must be prefixed with `handle:`
+     * @param  currencyPrices  Optional parameter: When fetching a product's price points, if you
+     *         have defined multiple currencies at the site level, you can optionally pass the
+     *         ?currency_prices=true query param to include an array of currency price data in the
+     *         response. If the product price point is set to use_site_exchange_rate: true, it will
+     *         return pricing based on the current exchange rate. If the flag is set to false, it
+     *         will return all of the defined prices for each currency.
+     * @return    Returns the ProductPricePointResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ProductPricePointResponse readProductPricePoint(
+            final int productId,
+            final int pricePointId,
+            final Boolean currencyPrices) throws ApiException, IOException {
+        return prepareReadProductPricePointRequest(productId, pricePointId,
+                currencyPrices).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for readProductPricePoint.
+     */
+    private ApiCall<ProductPricePointResponse, ApiException> prepareReadProductPricePointRequest(
+            final int productId,
+            final int pricePointId,
+            final Boolean currencyPrices) throws IOException {
+        return new ApiCall.Builder<ProductPricePointResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/products/{product_id}/price_points/{price_point_id}.json")
+                        .queryParam(param -> param.key("currency_prices")
+                                .value(currencyPrices).isRequired(false))
+                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("price_point_id").value(pricePointId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ProductPricePointResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

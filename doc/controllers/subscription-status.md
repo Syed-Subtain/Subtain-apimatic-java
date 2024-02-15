@@ -12,14 +12,14 @@ SubscriptionStatusController subscriptionStatusController = client.getSubscripti
 
 * [Retry Subscription](../../doc/controllers/subscription-status.md#retry-subscription)
 * [Cancel Subscription](../../doc/controllers/subscription-status.md#cancel-subscription)
+* [Update Automatic Subscription Resumption](../../doc/controllers/subscription-status.md#update-automatic-subscription-resumption)
 * [Resume Subscription](../../doc/controllers/subscription-status.md#resume-subscription)
 * [Pause Subscription](../../doc/controllers/subscription-status.md#pause-subscription)
-* [Update Automatic Subscription Resumption](../../doc/controllers/subscription-status.md#update-automatic-subscription-resumption)
 * [Reactivate Subscription](../../doc/controllers/subscription-status.md#reactivate-subscription)
-* [Initiate Delayed Cancellation](../../doc/controllers/subscription-status.md#initiate-delayed-cancellation)
-* [Stop Delayed Cancellation](../../doc/controllers/subscription-status.md#stop-delayed-cancellation)
 * [Cancel Dunning](../../doc/controllers/subscription-status.md#cancel-dunning)
 * [Preview Renewal](../../doc/controllers/subscription-status.md#preview-renewal)
+* [Initiate Delayed Cancellation](../../doc/controllers/subscription-status.md#initiate-delayed-cancellation)
+* [Stop Delayed Cancellation](../../doc/controllers/subscription-status.md#stop-delayed-cancellation)
 
 
 # Retry Subscription
@@ -387,6 +387,176 @@ try {
 | 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
 
 
+# Update Automatic Subscription Resumption
+
+Once a subscription has been paused / put on hold, you can update the date which was specified to automatically resume the subscription.
+
+To update a subscription's resume date, use this method to change or update the `automatically_resume_at` date.
+
+### Remove the resume date
+
+Alternately, you can change the `automatically_resume_at` to `null` if you would like the subscription to not have a resume date.
+
+```java
+SubscriptionResponse updateAutomaticSubscriptionResumption(
+    final String subscriptionId,
+    final PauseRequest body)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+| `body` | [`PauseRequest`](../../doc/models/pause-request.md) | Body, Optional | Allows to pause a Subscription |
+
+## Response Type
+
+[`SubscriptionResponse`](../../doc/models/subscription-response.md)
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+PauseRequest body = new PauseRequest.Builder()
+    .hold(new AutoResume.Builder()
+        .automaticallyResumeAt("2019-01-20")
+        .build())
+    .build();
+
+try {
+    SubscriptionResponse result = subscriptionStatusController.updateAutomaticSubscriptionResumption(subscriptionId, body);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "subscription": {
+    "id": 20359140,
+    "state": "on_hold",
+    "trial_started_at": null,
+    "trial_ended_at": null,
+    "activated_at": "2018-01-05T17:15:50-06:00",
+    "created_at": "2018-01-05T17:15:49-06:00",
+    "updated_at": "2018-01-09T10:26:14-06:00",
+    "expires_at": null,
+    "balance_in_cents": 0,
+    "current_period_ends_at": "2023-01-05T17:15:00-06:00",
+    "next_assessment_at": "2023-01-05T17:15:00-06:00",
+    "canceled_at": null,
+    "cancellation_message": null,
+    "next_product_id": null,
+    "cancel_at_end_of_period": false,
+    "payment_collection_method": "automatic",
+    "snap_day": null,
+    "cancellation_method": null,
+    "current_period_started_at": "2018-01-05T17:15:49-06:00",
+    "previous_state": "active",
+    "signup_payment_id": 219829722,
+    "signup_revenue": "100.00",
+    "delayed_cancel_at": null,
+    "coupon_code": null,
+    "total_revenue_in_cents": 10009991,
+    "product_price_in_cents": 10000,
+    "product_version_number": 1,
+    "payment_type": "credit_card",
+    "referral_code": "8y7jqr",
+    "coupon_use_count": null,
+    "coupon_uses_allowed": null,
+    "reason_code": null,
+    "automatically_resume_at": "2019-01-20T00:00:00-06:00",
+    "coupon_codes": [],
+    "customer": {
+      "id": 19948683,
+      "first_name": "Vanessa",
+      "last_name": "Test",
+      "organization": "",
+      "email": "vanessa@example.com",
+      "created_at": "2018-01-05T17:15:49-06:00",
+      "updated_at": "2018-01-05T17:15:51-06:00",
+      "reference": null,
+      "address": "123 Anywhere Ln",
+      "address_2": "",
+      "city": "Boston",
+      "state": "MA",
+      "zip": "02120",
+      "country": "US",
+      "phone": "555-555-1212",
+      "portal_invite_last_sent_at": "2018-01-05T17:15:51-06:00",
+      "portal_invite_last_accepted_at": null,
+      "verified": null,
+      "portal_customer_created_at": "2018-01-05T17:15:51-06:00",
+      "cc_emails": null,
+      "tax_exempt": false
+    },
+    "product": {
+      "id": 4535643,
+      "name": "Annual Product",
+      "handle": "annual-product",
+      "description": "",
+      "accounting_code": "",
+      "request_credit_card": true,
+      "expiration_interval": null,
+      "expiration_interval_unit": "never",
+      "created_at": "2017-08-25T10:25:31-05:00",
+      "updated_at": "2017-08-25T10:25:31-05:00",
+      "price_in_cents": 10000,
+      "interval": 12,
+      "interval_unit": "month",
+      "initial_charge_in_cents": null,
+      "trial_price_in_cents": null,
+      "trial_interval": null,
+      "trial_interval_unit": "month",
+      "archived_at": null,
+      "require_credit_card": true,
+      "return_params": "",
+      "taxable": false,
+      "update_return_url": "",
+      "tax_code": "",
+      "initial_charge_after_trial": false,
+      "version_number": 1,
+      "update_return_params": "",
+      "product_family": {
+        "id": 1025627,
+        "name": "Acme Products",
+        "description": "",
+        "handle": "acme-products",
+        "accounting_code": null
+      },
+      "public_signup_pages": []
+    },
+    "credit_card": {
+      "id": 13826563,
+      "first_name": "Bomb 3",
+      "last_name": "Test",
+      "masked_card_number": "XXXX-XXXX-XXXX-1",
+      "card_type": "bogus",
+      "expiration_month": 1,
+      "expiration_year": 2028,
+      "customer_id": 19948683,
+      "current_vault": "bogus",
+      "vault_token": "1",
+      "billing_address": "123 Anywhere Lane",
+      "billing_city": "Boston",
+      "billing_state": "Ma",
+      "billing_zip": "02120",
+      "billing_country": "US",
+      "customer_vault_token": null,
+      "billing_address_2": "",
+      "payment_type": "credit_card"
+    }
+  }
+}
+```
+
+
 # Resume Subscription
 
 Resume a paused (on-hold) subscription. If the normal next renewal date has not passed, the subscription will return to active and will renew on that date.  Otherwise, it will behave like a reactivation, setting the billing date to 'now' and charging the subscriber.
@@ -402,7 +572,7 @@ SubscriptionResponse resumeSubscription(
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
 | `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `calendarBillingResumptionCharge` | [`ResumptionCharge`](../../doc/models/resumption-charge.md) | Query, Optional | (For calendar billing subscriptions only) The way that the resumed subscription's charge should be handled<br>**Default**: `ResumptionCharge.PRORATED` |
+| `calendarBillingResumptionCharge` | [`ResumptionCharge`](../../doc/models/resumption-charge.md) | Query, Optional | (For calendar billing subscriptions only) The way that the resumed subscription's charge should be handled |
 
 ## Response Type
 
@@ -694,176 +864,6 @@ try {
 | 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
 
 
-# Update Automatic Subscription Resumption
-
-Once a subscription has been paused / put on hold, you can update the date which was specified to automatically resume the subscription.
-
-To update a subscription's resume date, use this method to change or update the `automatically_resume_at` date.
-
-### Remove the resume date
-
-Alternately, you can change the `automatically_resume_at` to `null` if you would like the subscription to not have a resume date.
-
-```java
-SubscriptionResponse updateAutomaticSubscriptionResumption(
-    final String subscriptionId,
-    final PauseRequest body)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `body` | [`PauseRequest`](../../doc/models/pause-request.md) | Body, Optional | Allows to pause a Subscription |
-
-## Response Type
-
-[`SubscriptionResponse`](../../doc/models/subscription-response.md)
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-PauseRequest body = new PauseRequest.Builder()
-    .hold(new AutoResume.Builder()
-        .automaticallyResumeAt("2019-01-20")
-        .build())
-    .build();
-
-try {
-    SubscriptionResponse result = subscriptionStatusController.updateAutomaticSubscriptionResumption(subscriptionId, body);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "subscription": {
-    "id": 20359140,
-    "state": "on_hold",
-    "trial_started_at": null,
-    "trial_ended_at": null,
-    "activated_at": "2018-01-05T17:15:50-06:00",
-    "created_at": "2018-01-05T17:15:49-06:00",
-    "updated_at": "2018-01-09T10:26:14-06:00",
-    "expires_at": null,
-    "balance_in_cents": 0,
-    "current_period_ends_at": "2023-01-05T17:15:00-06:00",
-    "next_assessment_at": "2023-01-05T17:15:00-06:00",
-    "canceled_at": null,
-    "cancellation_message": null,
-    "next_product_id": null,
-    "cancel_at_end_of_period": false,
-    "payment_collection_method": "automatic",
-    "snap_day": null,
-    "cancellation_method": null,
-    "current_period_started_at": "2018-01-05T17:15:49-06:00",
-    "previous_state": "active",
-    "signup_payment_id": 219829722,
-    "signup_revenue": "100.00",
-    "delayed_cancel_at": null,
-    "coupon_code": null,
-    "total_revenue_in_cents": 10009991,
-    "product_price_in_cents": 10000,
-    "product_version_number": 1,
-    "payment_type": "credit_card",
-    "referral_code": "8y7jqr",
-    "coupon_use_count": null,
-    "coupon_uses_allowed": null,
-    "reason_code": null,
-    "automatically_resume_at": "2019-01-20T00:00:00-06:00",
-    "coupon_codes": [],
-    "customer": {
-      "id": 19948683,
-      "first_name": "Vanessa",
-      "last_name": "Test",
-      "organization": "",
-      "email": "vanessa@example.com",
-      "created_at": "2018-01-05T17:15:49-06:00",
-      "updated_at": "2018-01-05T17:15:51-06:00",
-      "reference": null,
-      "address": "123 Anywhere Ln",
-      "address_2": "",
-      "city": "Boston",
-      "state": "MA",
-      "zip": "02120",
-      "country": "US",
-      "phone": "555-555-1212",
-      "portal_invite_last_sent_at": "2018-01-05T17:15:51-06:00",
-      "portal_invite_last_accepted_at": null,
-      "verified": null,
-      "portal_customer_created_at": "2018-01-05T17:15:51-06:00",
-      "cc_emails": null,
-      "tax_exempt": false
-    },
-    "product": {
-      "id": 4535643,
-      "name": "Annual Product",
-      "handle": "annual-product",
-      "description": "",
-      "accounting_code": "",
-      "request_credit_card": true,
-      "expiration_interval": null,
-      "expiration_interval_unit": "never",
-      "created_at": "2017-08-25T10:25:31-05:00",
-      "updated_at": "2017-08-25T10:25:31-05:00",
-      "price_in_cents": 10000,
-      "interval": 12,
-      "interval_unit": "month",
-      "initial_charge_in_cents": null,
-      "trial_price_in_cents": null,
-      "trial_interval": null,
-      "trial_interval_unit": "month",
-      "archived_at": null,
-      "require_credit_card": true,
-      "return_params": "",
-      "taxable": false,
-      "update_return_url": "",
-      "tax_code": "",
-      "initial_charge_after_trial": false,
-      "version_number": 1,
-      "update_return_params": "",
-      "product_family": {
-        "id": 1025627,
-        "name": "Acme Products",
-        "description": "",
-        "handle": "acme-products",
-        "accounting_code": null
-      },
-      "public_signup_pages": []
-    },
-    "credit_card": {
-      "id": 13826563,
-      "first_name": "Bomb 3",
-      "last_name": "Test",
-      "masked_card_number": "XXXX-XXXX-XXXX-1",
-      "card_type": "bogus",
-      "expiration_month": 1,
-      "expiration_year": 2028,
-      "customer_id": 19948683,
-      "current_vault": "bogus",
-      "vault_token": "1",
-      "billing_address": "123 Anywhere Lane",
-      "billing_city": "Boston",
-      "billing_state": "Ma",
-      "billing_zip": "02120",
-      "billing_country": "US",
-      "customer_vault_token": null,
-      "billing_address_2": "",
-      "payment_type": "credit_card"
-    }
-  }
-}
-```
-
-
 # Reactivate Subscription
 
 Chargify offers the ability to reactivate a previously canceled subscription. For details on how the reactivation works, and how to reactivate subscriptions through the application, see [reactivation](https://chargify.zendesk.com/hc/en-us/articles/4407898737691).
@@ -1055,7 +1055,7 @@ ReactivateSubscriptionRequest body = new ReactivateSubscriptionRequest.Builder()
     .preserveBalance(true)
     .couponCode("10OFF")
     .useCreditsAndPrepayments(true)
-    .resume(ReactivateSubscriptionRequestResume.fromMBoolean(
+    .resume(ReactivateSubscriptionRequestResume.fromBoolean(
         true
     ))
     .build();
@@ -1187,6 +1187,168 @@ try {
 | 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
 
 
+# Cancel Dunning
+
+If a subscription is currently in dunning, the subscription will be set to active and the active Dunner will be resolved.
+
+```java
+SubscriptionResponse cancelDunning(
+    final String subscriptionId)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+
+## Response Type
+
+[`SubscriptionResponse`](../../doc/models/subscription-response.md)
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+
+try {
+    SubscriptionResponse result = subscriptionStatusController.cancelDunning(subscriptionId);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+
+# Preview Renewal
+
+The Chargify API allows you to preview a renewal by posting to the renewals endpoint. Renewal Preview is an object representing a subscription’s next assessment. You can retrieve it to see a snapshot of how much your customer will be charged on their next renewal.
+
+The "Next Billing" amount and "Next Billing" date are already represented in the UI on each Subscriber's Summary. For more information, please see our documentation [here](https://chargify.zendesk.com/hc/en-us/articles/4407884887835#next-billing).
+
+## Optional Component Fields
+
+This endpoint is particularly useful due to the fact that it will return the computed billing amount for the base product and the components which are in use by a subscriber.
+
+By default, the preview will include billing details for all components _at their **current** quantities_. This means:
+
+* Current `allocated_quantity` for quantity-based components
+* Current enabled/disabled status for on/off components
+* Current metered usage `unit_balance` for metered components
+* Current metric quantity value for events recorded thus far for events-based components
+
+In the above statements, "current" means the quantity or value as of the call to the renewal preview endpoint. We do not predict end-of-period values for components, so metered or events-based usage may be less than it will eventually be at the end of the period.
+
+Optionally, **you may provide your own custom quantities** for any component to see a billing preview for non-current quantities. This is accomplished by sending a request body with data under the `components` key. See the request body documentation below.
+
+## Subscription Side Effects
+
+You can request a `POST` to obtain this data from the endpoint without any side effects. Plain and simple, this will preview data, not log any changes against a subscription.
+
+```java
+RenewalPreviewResponse previewRenewal(
+    final String subscriptionId,
+    final RenewalPreviewRequest body)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+| `body` | [`RenewalPreviewRequest`](../../doc/models/renewal-preview-request.md) | Body, Optional | - |
+
+## Response Type
+
+[`RenewalPreviewResponse`](../../doc/models/renewal-preview-response.md)
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+RenewalPreviewRequest body = new RenewalPreviewRequest.Builder()
+    .components(Arrays.asList(
+        new RenewalPreviewComponent.Builder()
+            .componentId(RenewalPreviewComponentComponentId.fromNumber(
+                10708
+            ))
+            .quantity(10000)
+            .build(),
+        new RenewalPreviewComponent.Builder()
+            .componentId(RenewalPreviewComponentComponentId.fromString(
+                "handle:small-instance-hours"
+            ))
+            .quantity(10000)
+            .pricePointId(RenewalPreviewComponentPricePointId.fromNumber(
+                8712
+            ))
+            .build(),
+        new RenewalPreviewComponent.Builder()
+            .componentId(RenewalPreviewComponentComponentId.fromString(
+                "handle:large-instance-hours"
+            ))
+            .quantity(100)
+            .pricePointId(RenewalPreviewComponentPricePointId.fromString(
+                "handle:startup-pricing"
+            ))
+            .build()
+    ))
+    .build();
+
+try {
+    RenewalPreviewResponse result = subscriptionStatusController.previewRenewal(subscriptionId, body);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "renewal_preview": {
+    "next_assessment_at": "2017-03-13T12:50:55-04:00",
+    "subtotal_in_cents": 6000,
+    "total_tax_in_cents": 0,
+    "total_discount_in_cents": 0,
+    "total_in_cents": 6000,
+    "existing_balance_in_cents": 0,
+    "total_amount_due_in_cents": 6000,
+    "uncalculated_taxes": false,
+    "line_items": [
+      {
+        "transaction_type": "charge",
+        "kind": "baseline",
+        "amount_in_cents": 5000,
+        "memo": "Gold Product (03/13/2017 - 04/13/2017)",
+        "discount_amount_in_cents": 0,
+        "taxable_amount_in_cents": 0,
+        "product_id": 1,
+        "product_handle": "gold-product",
+        "product_name": "Gold Product"
+      },
+      {
+        "transaction_type": "charge",
+        "kind": "quantity_based_component",
+        "amount_in_cents": 1000,
+        "memo": "Quantity Component: 10 Quantity Components",
+        "discount_amount_in_cents": 0,
+        "taxable_amount_in_cents": 0,
+        "component_id": 104,
+        "component_handle": "quantity-component",
+        "component_name": "Quantity Component"
+      }
+    ]
+  }
+}
+```
+
+
 # Initiate Delayed Cancellation
 
 Chargify offers the ability to cancel a subscription at the end of the current billing period. This period is set by its current product.
@@ -1282,166 +1444,4 @@ try {
 | HTTP Status Code | Error Description | Exception Class |
 |  --- | --- | --- |
 | 404 | Not Found | `ApiException` |
-
-
-# Cancel Dunning
-
-If a subscription is currently in dunning, the subscription will be set to active and the active Dunner will be resolved.
-
-```java
-SubscriptionResponse cancelDunning(
-    final String subscriptionId)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-
-## Response Type
-
-[`SubscriptionResponse`](../../doc/models/subscription-response.md)
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-
-try {
-    SubscriptionResponse result = subscriptionStatusController.cancelDunning(subscriptionId);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-
-# Preview Renewal
-
-The Chargify API allows you to preview a renewal by posting to the renewals endpoint. Renewal Preview is an object representing a subscription’s next assessment. You can retrieve it to see a snapshot of how much your customer will be charged on their next renewal.
-
-The "Next Billing" amount and "Next Billing" date are already represented in the UI on each Subscriber's Summary. For more information, please see our documentation [here](https://chargify.zendesk.com/hc/en-us/articles/4407884887835#next-billing).
-
-## Optional Component Fields
-
-This endpoint is particularly useful due to the fact that it will return the computed billing amount for the base product and the components which are in use by a subscriber.
-
-By default, the preview will include billing details for all components _at their **current** quantities_. This means:
-
-* Current `allocated_quantity` for quantity-based components
-* Current enabled/disabled status for on/off components
-* Current metered usage `unit_balance` for metered components
-* Current metric quantity value for events recorded thus far for events-based components
-
-In the above statements, "current" means the quantity or value as of the call to the renewal preview endpoint. We do not predict end-of-period values for components, so metered or events-based usage may be less than it will eventually be at the end of the period.
-
-Optionally, **you may provide your own custom quantities** for any component to see a billing preview for non-current quantities. This is accomplished by sending a request body with data under the `components` key. See the request body documentation below.
-
-## Subscription Side Effects
-
-You can request a `POST` to obtain this data from the endpoint without any side effects. Plain and simple, this will preview data, not log any changes against a subscription.
-
-```java
-RenewalPreviewResponse previewRenewal(
-    final String subscriptionId,
-    final RenewalPreviewRequest body)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `body` | [`RenewalPreviewRequest`](../../doc/models/renewal-preview-request.md) | Body, Optional | - |
-
-## Response Type
-
-[`RenewalPreviewResponse`](../../doc/models/renewal-preview-response.md)
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-RenewalPreviewRequest body = new RenewalPreviewRequest.Builder()
-    .components(Arrays.asList(
-        new RenewalPreviewComponent.Builder()
-            .componentId(RenewalPreviewComponentComponentId.fromNumber(
-                10708
-            ))
-            .quantity(10000)
-            .build(),
-        new RenewalPreviewComponent.Builder()
-            .componentId(RenewalPreviewComponentComponentId.fromMString(
-                "handle:small-instance-hours"
-            ))
-            .quantity(10000)
-            .pricePointId(RenewalPreviewComponentPricePointId.fromNumber(
-                8712
-            ))
-            .build(),
-        new RenewalPreviewComponent.Builder()
-            .componentId(RenewalPreviewComponentComponentId.fromMString(
-                "handle:large-instance-hours"
-            ))
-            .quantity(100)
-            .pricePointId(RenewalPreviewComponentPricePointId.fromMString(
-                "handle:startup-pricing"
-            ))
-            .build()
-    ))
-    .build();
-
-try {
-    RenewalPreviewResponse result = subscriptionStatusController.previewRenewal(subscriptionId, body);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "renewal_preview": {
-    "next_assessment_at": "2017-03-13T12:50:55-04:00",
-    "subtotal_in_cents": 6000,
-    "total_tax_in_cents": 0,
-    "total_discount_in_cents": 0,
-    "total_in_cents": 6000,
-    "existing_balance_in_cents": 0,
-    "total_amount_due_in_cents": 6000,
-    "uncalculated_taxes": false,
-    "line_items": [
-      {
-        "transaction_type": "charge",
-        "kind": "baseline",
-        "amount_in_cents": 5000,
-        "memo": "Gold Product (03/13/2017 - 04/13/2017)",
-        "discount_amount_in_cents": 0,
-        "taxable_amount_in_cents": 0,
-        "product_id": 1,
-        "product_handle": "gold-product",
-        "product_name": "Gold Product"
-      },
-      {
-        "transaction_type": "charge",
-        "kind": "quantity_based_component",
-        "amount_in_cents": 1000,
-        "memo": "Quantity Component: 10 Quantity Components",
-        "discount_amount_in_cents": 0,
-        "taxable_amount_in_cents": 0,
-        "component_id": 104,
-        "component_handle": "quantity-component",
-        "component_name": "Quantity Component"
-      }
-    ]
-  }
-}
-```
 

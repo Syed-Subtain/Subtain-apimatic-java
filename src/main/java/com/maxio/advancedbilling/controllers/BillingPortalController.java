@@ -37,61 +37,41 @@ public final class BillingPortalController extends BaseController {
     }
 
     /**
-     * ## Billing Portal Documentation Full documentation on how the Billing Portal operates within
-     * the Chargify UI can be located
-     * [here](https://chargify.zendesk.com/hc/en-us/articles/4407648972443). This documentation is
-     * focused on how the to configure the Billing Portal Settings, as well as Subscriber
-     * Interaction and Merchant Management of the Billing Portal. You can use this endpoint to
-     * enable Billing Portal access for a Customer, with the option of sending the Customer an
-     * Invitation email at the same time. ## Billing Portal Security If your customer has been
-     * invited to the Billing Portal, then they will receive a link to manage their subscription
-     * (the “Management URL”) automatically at the bottom of their statements, invoices, and
-     * receipts. **This link changes periodically for security and is only valid for 65 days.** If
-     * you need to provide your customer their Management URL through other means, you can retrieve
-     * it via the API. Because the URL is cryptographically signed with a timestamp, it is not
-     * possible for merchants to generate the URL without requesting it from Chargify. In order to
-     * prevent abuse &amp; overuse, we ask that you request a new URL only when absolutely necessary.
-     * Management URLs are good for 65 days, so you should re-use a previously generated one as much
-     * as possible. If you use the URL frequently (such as to display on your website), please **do
-     * not** make an API request to Chargify every time.
+     * You can revoke a customer's Billing Portal invitation. If you attempt to revoke an invitation
+     * when the Billing Portal is already disabled for a Customer, you will receive a 422 error
+     * response. ## Limitations This endpoint will only return a JSON response.
      * @param  customerId  Required parameter: The Chargify id of the customer
-     * @param  autoInvite  Optional parameter: When set to 1, an Invitation email will be sent to
-     *         the Customer. When set to 0, or not sent, an email will not be sent. Use in query:
-     *         `auto_invite=1`.
-     * @return    Returns the CustomerResponse response from the API call
+     * @return    Returns the RevokedInvitation response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public CustomerResponse enableBillingPortalForCustomer(
-            final int customerId,
-            final AutoInvite autoInvite) throws ApiException, IOException {
-        return prepareEnableBillingPortalForCustomerRequest(customerId, autoInvite).execute();
+    public RevokedInvitation revokeBillingPortalAccess(
+            final int customerId) throws ApiException, IOException {
+        return prepareRevokeBillingPortalAccessRequest(customerId).execute();
     }
 
     /**
-     * Builds the ApiCall object for enableBillingPortalForCustomer.
+     * Builds the ApiCall object for revokeBillingPortalAccess.
      */
-    private ApiCall<CustomerResponse, ApiException> prepareEnableBillingPortalForCustomerRequest(
-            final int customerId,
-            final AutoInvite autoInvite) throws IOException {
-        return new ApiCall.Builder<CustomerResponse, ApiException>()
+    private ApiCall<RevokedInvitation, ApiException> prepareRevokeBillingPortalAccessRequest(
+            final int customerId) throws IOException {
+        return new ApiCall.Builder<RevokedInvitation, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/portal/customers/{customer_id}/enable.json")
-                        .queryParam(param -> param.key("auto_invite")
-                                .value((autoInvite != null) ? autoInvite.value() : null).isRequired(false))
+                        .path("/portal/customers/{customer_id}/invitations/revoke.json")
                         .templateParam(param -> param.key("customer_id").value(customerId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserialize(response, CustomerResponse.class))
+                                response -> ApiHelper.deserialize(response, RevokedInvitation.class))
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                                (reason, context) -> new ApiException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -130,7 +110,8 @@ public final class BillingPortalController extends BaseController {
                         .templateParam(param -> param.key("customer_id").value(customerId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -179,7 +160,8 @@ public final class BillingPortalController extends BaseController {
                         .templateParam(param -> param.key("customer_id").value(customerId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -194,40 +176,62 @@ public final class BillingPortalController extends BaseController {
     }
 
     /**
-     * You can revoke a customer's Billing Portal invitation. If you attempt to revoke an invitation
-     * when the Billing Portal is already disabled for a Customer, you will receive a 422 error
-     * response. ## Limitations This endpoint will only return a JSON response.
+     * ## Billing Portal Documentation Full documentation on how the Billing Portal operates within
+     * the Chargify UI can be located
+     * [here](https://chargify.zendesk.com/hc/en-us/articles/4407648972443). This documentation is
+     * focused on how the to configure the Billing Portal Settings, as well as Subscriber
+     * Interaction and Merchant Management of the Billing Portal. You can use this endpoint to
+     * enable Billing Portal access for a Customer, with the option of sending the Customer an
+     * Invitation email at the same time. ## Billing Portal Security If your customer has been
+     * invited to the Billing Portal, then they will receive a link to manage their subscription
+     * (the “Management URL”) automatically at the bottom of their statements, invoices, and
+     * receipts. **This link changes periodically for security and is only valid for 65 days.** If
+     * you need to provide your customer their Management URL through other means, you can retrieve
+     * it via the API. Because the URL is cryptographically signed with a timestamp, it is not
+     * possible for merchants to generate the URL without requesting it from Chargify. In order to
+     * prevent abuse &amp; overuse, we ask that you request a new URL only when absolutely necessary.
+     * Management URLs are good for 65 days, so you should re-use a previously generated one as much
+     * as possible. If you use the URL frequently (such as to display on your website), please **do
+     * not** make an API request to Chargify every time.
      * @param  customerId  Required parameter: The Chargify id of the customer
-     * @return    Returns the RevokedInvitation response from the API call
+     * @param  autoInvite  Optional parameter: When set to 1, an Invitation email will be sent to
+     *         the Customer. When set to 0, or not sent, an email will not be sent. Use in query:
+     *         `auto_invite=1`.
+     * @return    Returns the CustomerResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public RevokedInvitation revokeBillingPortalAccess(
-            final int customerId) throws ApiException, IOException {
-        return prepareRevokeBillingPortalAccessRequest(customerId).execute();
+    public CustomerResponse enableBillingPortalForCustomer(
+            final int customerId,
+            final AutoInvite autoInvite) throws ApiException, IOException {
+        return prepareEnableBillingPortalForCustomerRequest(customerId, autoInvite).execute();
     }
 
     /**
-     * Builds the ApiCall object for revokeBillingPortalAccess.
+     * Builds the ApiCall object for enableBillingPortalForCustomer.
      */
-    private ApiCall<RevokedInvitation, ApiException> prepareRevokeBillingPortalAccessRequest(
-            final int customerId) throws IOException {
-        return new ApiCall.Builder<RevokedInvitation, ApiException>()
+    private ApiCall<CustomerResponse, ApiException> prepareEnableBillingPortalForCustomerRequest(
+            final int customerId,
+            final AutoInvite autoInvite) throws IOException {
+        return new ApiCall.Builder<CustomerResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/portal/customers/{customer_id}/invitations/revoke.json")
+                        .path("/portal/customers/{customer_id}/enable.json")
+                        .queryParam(param -> param.key("auto_invite")
+                                .value((autoInvite != null) ? autoInvite.value() : null).isRequired(false))
                         .templateParam(param -> param.key("customer_id").value(customerId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserialize(response, RevokedInvitation.class))
+                                response -> ApiHelper.deserialize(response, CustomerResponse.class))
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ApiException(reason, context)))
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

@@ -202,7 +202,8 @@ public final class PaymentProfilesController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -214,42 +215,164 @@ public final class PaymentProfilesController extends BaseController {
     }
 
     /**
-     * This method will return all of the active `payment_profiles` for a Site, or for one Customer
-     * within a site. If no payment profiles are found, this endpoint will return an empty array,
-     * not a 404.
-     * @param  input  ListPaymentProfilesInput object containing request parameters
-     * @return    Returns the List of ListPaymentProfilesResponse response from the API call
+     * Deletes an unused payment profile. If the payment profile is in use by one or more
+     * subscriptions or groups, a 422 and error message will be returned.
+     * @param  paymentProfileId  Required parameter: The Chargify id of the payment profile
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public List<ListPaymentProfilesResponse> listPaymentProfiles(
-            final ListPaymentProfilesInput input) throws ApiException, IOException {
-        return prepareListPaymentProfilesRequest(input).execute();
+    public void deleteUnusedPaymentProfile(
+            final String paymentProfileId) throws ApiException, IOException {
+        prepareDeleteUnusedPaymentProfileRequest(paymentProfileId).execute();
     }
 
     /**
-     * Builds the ApiCall object for listPaymentProfiles.
+     * Builds the ApiCall object for deleteUnusedPaymentProfile.
      */
-    private ApiCall<List<ListPaymentProfilesResponse>, ApiException> prepareListPaymentProfilesRequest(
-            final ListPaymentProfilesInput input) throws IOException {
-        return new ApiCall.Builder<List<ListPaymentProfilesResponse>, ApiException>()
+    private ApiCall<Void, ApiException> prepareDeleteUnusedPaymentProfileRequest(
+            final String paymentProfileId) throws IOException {
+        return new ApiCall.Builder<Void, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/payment_profiles.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .queryParam(param -> param.key("customer_id")
-                                .value(input.getCustomerId()).isRequired(false))
+                        .path("/payment_profiles/{payment_profile_id}.json")
+                        .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
+                                .shouldEncode(true))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This will delete a payment profile belonging to the customer on the subscription. + If the
+     * customer has multiple subscriptions, the payment profile will be removed from all of them. +
+     * If you delete the default payment profile for a subscription, you will need to specify
+     * another payment profile to be the default through the api, or either prompt the user to enter
+     * a card in the billing portal or on the self-service page, or visit the Payment Details tab on
+     * the subscription in the Admin UI and use the “Add New Credit Card” or “Make Active Payment
+     * Method” link, (depending on whether there are other cards present).
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  paymentProfileId  Required parameter: The Chargify id of the payment profile
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public void deleteSubscriptionsPaymentProfile(
+            final String subscriptionId,
+            final String paymentProfileId) throws ApiException, IOException {
+        prepareDeleteSubscriptionsPaymentProfileRequest(subscriptionId, paymentProfileId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for deleteSubscriptionsPaymentProfile.
+     */
+    private ApiCall<Void, ApiException> prepareDeleteSubscriptionsPaymentProfileRequest(
+            final String subscriptionId,
+            final String paymentProfileId) throws IOException {
+        return new ApiCall.Builder<Void, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/payment_profiles/{payment_profile_id}.json")
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
+                                .shouldEncode(true))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This will delete a Payment Profile belonging to a Subscription Group. **Note**: If the
+     * Payment Profile belongs to multiple Subscription Groups and/or Subscriptions, it will be
+     * removed from all of them.
+     * @param  uid  Required parameter: The uid of the subscription group
+     * @param  paymentProfileId  Required parameter: The Chargify id of the payment profile
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public void deleteSubscriptionGroupPaymentProfile(
+            final String uid,
+            final String paymentProfileId) throws ApiException, IOException {
+        prepareDeleteSubscriptionGroupPaymentProfileRequest(uid, paymentProfileId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for deleteSubscriptionGroupPaymentProfile.
+     */
+    private ApiCall<Void, ApiException> prepareDeleteSubscriptionGroupPaymentProfileRequest(
+            final String uid,
+            final String paymentProfileId) throws IOException {
+        return new ApiCall.Builder<Void, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscription_groups/{uid}/payment_profiles/{payment_profile_id}.json")
+                        .templateParam(param -> param.key("uid").value(uid)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
+                                .shouldEncode(true))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * One Time Tokens aka Chargify Tokens house the credit card or ACH (Authorize.Net or Stripe
+     * only) data for a customer. You can use One Time Tokens while creating a subscription or
+     * payment profile instead of passing all bank account or credit card data directly to a given
+     * API endpoint. To obtain a One Time Token you have to use
+     * [chargify.js](https://developers.chargify.com/docs/developer-docs/ZG9jOjE0NjAzNDI0-overview).
+     * @param  chargifyToken  Required parameter: Chargify Token
+     * @return    Returns the GetOneTimeTokenRequest response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public GetOneTimeTokenRequest readOneTimeToken(
+            final String chargifyToken) throws ApiException, IOException {
+        return prepareReadOneTimeTokenRequest(chargifyToken).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for readOneTimeToken.
+     */
+    private ApiCall<GetOneTimeTokenRequest, ApiException> prepareReadOneTimeTokenRequest(
+            final String chargifyToken) throws IOException {
+        return new ApiCall.Builder<GetOneTimeTokenRequest, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/one_time_tokens/{chargify_token}.json")
+                        .templateParam(param -> param.key("chargify_token").value(chargifyToken)
+                                .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserializeArray(response,
-                                        ListPaymentProfilesResponse[].class))
+                                response -> ApiHelper.deserialize(response, GetOneTimeTokenRequest.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -291,7 +414,8 @@ public final class PaymentProfilesController extends BaseController {
                         .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -355,179 +479,12 @@ public final class PaymentProfilesController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, UpdatePaymentProfileResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Deletes an unused payment profile. If the payment profile is in use by one or more
-     * subscriptions or groups, a 422 and error message will be returned.
-     * @param  paymentProfileId  Required parameter: The Chargify id of the payment profile
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void deleteUnusedPaymentProfile(
-            final String paymentProfileId) throws ApiException, IOException {
-        prepareDeleteUnusedPaymentProfileRequest(paymentProfileId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for deleteUnusedPaymentProfile.
-     */
-    private ApiCall<Void, ApiException> prepareDeleteUnusedPaymentProfileRequest(
-            final String paymentProfileId) throws IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/payment_profiles/{payment_profile_id}.json")
-                        .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
-                                .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This will delete a payment profile belonging to the customer on the subscription. + If the
-     * customer has multiple subscriptions, the payment profile will be removed from all of them. +
-     * If you delete the default payment profile for a subscription, you will need to specify
-     * another payment profile to be the default through the api, or either prompt the user to enter
-     * a card in the billing portal or on the self-service page, or visit the Payment Details tab on
-     * the subscription in the Admin UI and use the “Add New Credit Card” or “Make Active Payment
-     * Method” link, (depending on whether there are other cards present).
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  paymentProfileId  Required parameter: The Chargify id of the payment profile
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void deleteSubscriptionsPaymentProfile(
-            final String subscriptionId,
-            final String paymentProfileId) throws ApiException, IOException {
-        prepareDeleteSubscriptionsPaymentProfileRequest(subscriptionId, paymentProfileId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for deleteSubscriptionsPaymentProfile.
-     */
-    private ApiCall<Void, ApiException> prepareDeleteSubscriptionsPaymentProfileRequest(
-            final String subscriptionId,
-            final String paymentProfileId) throws IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/payment_profiles/{payment_profile_id}.json")
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
-                                .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Submit the two small deposit amounts the customer received in their bank account in order to
-     * verify the bank account. (Stripe only).
-     * @param  bankAccountId  Required parameter: Identifier of the bank account in the system.
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the BankAccountResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public BankAccountResponse verifyBankAccount(
-            final int bankAccountId,
-            final BankAccountVerificationRequest body) throws ApiException, IOException {
-        return prepareVerifyBankAccountRequest(bankAccountId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for verifyBankAccount.
-     */
-    private ApiCall<BankAccountResponse, ApiException> prepareVerifyBankAccountRequest(
-            final int bankAccountId,
-            final BankAccountVerificationRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<BankAccountResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/bank_accounts/{bank_account_id}/verification.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("bank_account_id").value(bankAccountId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.PUT))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, BankAccountResponse.class))
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This will delete a Payment Profile belonging to a Subscription Group. **Note**: If the
-     * Payment Profile belongs to multiple Subscription Groups and/or Subscriptions, it will be
-     * removed from all of them.
-     * @param  uid  Required parameter: The uid of the subscription group
-     * @param  paymentProfileId  Required parameter: The Chargify id of the payment profile
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void deleteSubscriptionGroupPaymentProfile(
-            final String uid,
-            final String paymentProfileId) throws ApiException, IOException {
-        prepareDeleteSubscriptionGroupPaymentProfileRequest(uid, paymentProfileId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for deleteSubscriptionGroupPaymentProfile.
-     */
-    private ApiCall<Void, ApiException> prepareDeleteSubscriptionGroupPaymentProfileRequest(
-            final String uid,
-            final String paymentProfileId) throws IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscription_groups/{uid}/payment_profiles/{payment_profile_id}.json")
-                        .templateParam(param -> param.key("uid").value(uid)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
-                                .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -567,7 +524,8 @@ public final class PaymentProfilesController extends BaseController {
                         .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -616,7 +574,8 @@ public final class PaymentProfilesController extends BaseController {
                         .templateParam(param -> param.key("payment_profile_id").value(paymentProfileId)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -631,39 +590,91 @@ public final class PaymentProfilesController extends BaseController {
     }
 
     /**
-     * One Time Tokens aka Chargify Tokens house the credit card or ACH (Authorize.Net or Stripe
-     * only) data for a customer. You can use One Time Tokens while creating a subscription or
-     * payment profile instead of passing all bank account or credit card data directly to a given
-     * API endpoint. To obtain a One Time Token you have to use
-     * [chargify.js](https://developers.chargify.com/docs/developer-docs/ZG9jOjE0NjAzNDI0-overview).
-     * @param  chargifyToken  Required parameter: Chargify Token
-     * @return    Returns the GetOneTimeTokenRequest response from the API call
+     * This method will return all of the active `payment_profiles` for a Site, or for one Customer
+     * within a site. If no payment profiles are found, this endpoint will return an empty array,
+     * not a 404.
+     * @param  input  ListPaymentProfilesInput object containing request parameters
+     * @return    Returns the List of ListPaymentProfilesResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public GetOneTimeTokenRequest readOneTimeToken(
-            final String chargifyToken) throws ApiException, IOException {
-        return prepareReadOneTimeTokenRequest(chargifyToken).execute();
+    public List<ListPaymentProfilesResponse> listPaymentProfiles(
+            final ListPaymentProfilesInput input) throws ApiException, IOException {
+        return prepareListPaymentProfilesRequest(input).execute();
     }
 
     /**
-     * Builds the ApiCall object for readOneTimeToken.
+     * Builds the ApiCall object for listPaymentProfiles.
      */
-    private ApiCall<GetOneTimeTokenRequest, ApiException> prepareReadOneTimeTokenRequest(
-            final String chargifyToken) throws IOException {
-        return new ApiCall.Builder<GetOneTimeTokenRequest, ApiException>()
+    private ApiCall<List<ListPaymentProfilesResponse>, ApiException> prepareListPaymentProfilesRequest(
+            final ListPaymentProfilesInput input) throws IOException {
+        return new ApiCall.Builder<List<ListPaymentProfilesResponse>, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/one_time_tokens/{chargify_token}.json")
-                        .templateParam(param -> param.key("chargify_token").value(chargifyToken)
-                                .shouldEncode(true))
+                        .path("/payment_profiles.json")
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .queryParam(param -> param.key("customer_id")
+                                .value(input.getCustomerId()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserialize(response, GetOneTimeTokenRequest.class))
+                                response -> ApiHelper.deserializeArray(response,
+                                        ListPaymentProfilesResponse[].class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Submit the two small deposit amounts the customer received in their bank account in order to
+     * verify the bank account. (Stripe only).
+     * @param  bankAccountId  Required parameter: Identifier of the bank account in the system.
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the BankAccountResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public BankAccountResponse verifyBankAccount(
+            final int bankAccountId,
+            final BankAccountVerificationRequest body) throws ApiException, IOException {
+        return prepareVerifyBankAccountRequest(bankAccountId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for verifyBankAccount.
+     */
+    private ApiCall<BankAccountResponse, ApiException> prepareVerifyBankAccountRequest(
+            final int bankAccountId,
+            final BankAccountVerificationRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<BankAccountResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/bank_accounts/{bank_account_id}/verification.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("bank_account_id").value(bankAccountId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.PUT))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, BankAccountResponse.class))
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -703,7 +714,8 @@ public final class PaymentProfilesController extends BaseController {
                         .path("/subscriptions/{subscription_id}/request_payment_profiles_update.json")
                         .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)

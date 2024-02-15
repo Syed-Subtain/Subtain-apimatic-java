@@ -36,6 +36,46 @@ public final class ProductsController extends BaseController {
     }
 
     /**
+     * Sending a DELETE request to this endpoint will archive the product. All current subscribers
+     * will be unffected; their subscription/purchase will continue to be charged monthly. This will
+     * restrict the option to chose the product for purchase via the Billing Portal, as well as
+     * disable Public Signup Pages for the product.
+     * @param  productId  Required parameter: The Chargify id of the product
+     * @return    Returns the ProductResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ProductResponse archiveProduct(
+            final int productId) throws ApiException, IOException {
+        return prepareArchiveProductRequest(productId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for archiveProduct.
+     */
+    private ApiCall<ProductResponse, ApiException> prepareArchiveProductRequest(
+            final int productId) throws IOException {
+        return new ApiCall.Builder<ProductResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/products/{product_id}.json")
+                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ProductResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
      * Use this method to create a product within your Chargify site. + [Products
      * Documentation](https://maxio-chargify.zendesk.com/hc/en-us/articles/5405561405709) +
      * [Changing a Subscription's
@@ -71,7 +111,8 @@ public final class ProductsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -108,7 +149,8 @@ public final class ProductsController extends BaseController {
                         .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -155,7 +197,8 @@ public final class ProductsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -163,45 +206,6 @@ public final class ProductsController extends BaseController {
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Sending a DELETE request to this endpoint will archive the product. All current subscribers
-     * will be unffected; their subscription/purchase will continue to be charged monthly. This will
-     * restrict the option to chose the product for purchase via the Billing Portal, as well as
-     * disable Public Signup Pages for the product.
-     * @param  productId  Required parameter: The Chargify id of the product
-     * @return    Returns the ProductResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ProductResponse archiveProduct(
-            final int productId) throws ApiException, IOException {
-        return prepareArchiveProductRequest(productId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for archiveProduct.
-     */
-    private ApiCall<ProductResponse, ApiException> prepareArchiveProductRequest(
-            final int productId) throws IOException {
-        return new ApiCall.Builder<ProductResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/products/{product_id}.json")
-                        .templateParam(param -> param.key("product_id").value(productId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ProductResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -233,7 +237,8 @@ public final class ProductsController extends BaseController {
                         .templateParam(param -> param.key("api_handle").value(apiHandle)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -289,7 +294,8 @@ public final class ProductsController extends BaseController {
                         .queryParam(param -> param.key("filter[use_site_exchange_rate]")
                                 .value(input.getFilterUseSiteExchangeRate()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(

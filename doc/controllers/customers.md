@@ -12,11 +12,11 @@ CustomersController customersController = client.getCustomersController();
 
 * [Create Customer](../../doc/controllers/customers.md#create-customer)
 * [List Customers](../../doc/controllers/customers.md#list-customers)
+* [Read Customer by Reference](../../doc/controllers/customers.md#read-customer-by-reference)
+* [List Customer Subscriptions](../../doc/controllers/customers.md#list-customer-subscriptions)
 * [Read Customer](../../doc/controllers/customers.md#read-customer)
 * [Update Customer](../../doc/controllers/customers.md#update-customer)
 * [Delete Customer](../../doc/controllers/customers.md#delete-customer)
-* [Read Customer by Reference](../../doc/controllers/customers.md#read-customer-by-reference)
-* [List Customer Subscriptions](../../doc/controllers/customers.md#list-customer-subscriptions)
 
 
 # Create Customer
@@ -165,8 +165,8 @@ List<CustomerResponse> listCustomers(
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
 | `direction` | [`ListCustomersInputDirection`](../../doc/models/containers/list-customers-input-direction.md) | Query, Optional | This is a container for one-of cases. |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 50. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `50`<br>**Constraints**: `<= 200` |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 50. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
 | `dateField` | [`BasicDateField`](../../doc/models/basic-date-field.md) | Query, Optional | The type of filter you would like to apply to your search.<br>Use in query: `date_field=created_at`. |
 | `startDate` | `String` | Query, Optional | The start date (format YYYY-MM-DD) with which to filter the date_field. Returns subscriptions with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. |
 | `endDate` | `String` | Query, Optional | The end date (format YYYY-MM-DD) with which to filter the date_field. Returns subscriptions with a timestamp up to and including 11:59:59PM in your site’s time zone on the date specified. |
@@ -279,6 +279,76 @@ try {
     }
   }
 ]
+```
+
+
+# Read Customer by Reference
+
+Use this method to return the customer object if you have the unique **Reference ID (Your App)** value handy. It will return a single match.
+
+```java
+CustomerResponse readCustomerByReference(
+    final String reference)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `reference` | `String` | Query, Required | Customer reference |
+
+## Response Type
+
+[`CustomerResponse`](../../doc/models/customer-response.md)
+
+## Example Usage
+
+```java
+String reference = "reference4";
+
+try {
+    CustomerResponse result = customersController.readCustomerByReference(reference);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+
+# List Customer Subscriptions
+
+This method lists all subscriptions that belong to a customer.
+
+```java
+List<SubscriptionResponse> listCustomerSubscriptions(
+    final int customerId)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `customerId` | `int` | Template, Required | The Chargify id of the customer |
+
+## Response Type
+
+[`List<SubscriptionResponse>`](../../doc/models/subscription-response.md)
+
+## Example Usage
+
+```java
+int customerId = 150;
+
+try {
+    List<SubscriptionResponse> result = customersController.listCustomerSubscriptions(customerId);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
 ```
 
 
@@ -426,76 +496,6 @@ int id = 112;
 
 try {
     customersController.deleteCustomer(id);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-
-# Read Customer by Reference
-
-Use this method to return the customer object if you have the unique **Reference ID (Your App)** value handy. It will return a single match.
-
-```java
-CustomerResponse readCustomerByReference(
-    final String reference)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `reference` | `String` | Query, Required | Customer reference |
-
-## Response Type
-
-[`CustomerResponse`](../../doc/models/customer-response.md)
-
-## Example Usage
-
-```java
-String reference = "reference4";
-
-try {
-    CustomerResponse result = customersController.readCustomerByReference(reference);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-
-# List Customer Subscriptions
-
-This method lists all subscriptions that belong to a customer.
-
-```java
-List<SubscriptionResponse> listCustomerSubscriptions(
-    final int customerId)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `customerId` | `int` | Template, Required | The Chargify id of the customer |
-
-## Response Type
-
-[`List<SubscriptionResponse>`](../../doc/models/subscription-response.md)
-
-## Example Usage
-
-```java
-int customerId = 150;
-
-try {
-    List<SubscriptionResponse> result = customersController.listCustomerSubscriptions(customerId);
-    System.out.println(result);
 } catch (ApiException e) {
     e.printStackTrace();
 } catch (IOException e) {

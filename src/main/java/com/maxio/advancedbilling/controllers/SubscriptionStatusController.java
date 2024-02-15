@@ -67,7 +67,8 @@ public final class SubscriptionStatusController extends BaseController {
                         .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -114,100 +115,9 @@ public final class SubscriptionStatusController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, SubscriptionResponse.class))
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Resume a paused (on-hold) subscription. If the normal next renewal date has not passed, the
-     * subscription will return to active and will renew on that date. Otherwise, it will behave
-     * like a reactivation, setting the billing date to 'now' and charging the subscriber.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  calendarBillingResumptionCharge  Optional parameter: (For calendar billing
-     *         subscriptions only) The way that the resumed subscription's charge should be handled
-     * @return    Returns the SubscriptionResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public SubscriptionResponse resumeSubscription(
-            final String subscriptionId,
-            final ResumptionCharge calendarBillingResumptionCharge) throws ApiException, IOException {
-        return prepareResumeSubscriptionRequest(subscriptionId,
-                calendarBillingResumptionCharge).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for resumeSubscription.
-     */
-    private ApiCall<SubscriptionResponse, ApiException> prepareResumeSubscriptionRequest(
-            final String subscriptionId,
-            final ResumptionCharge calendarBillingResumptionCharge) throws IOException {
-        return new ApiCall.Builder<SubscriptionResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/resume.json")
-                        .queryParam(param -> param.key("calendar_billing['resumption_charge']")
-                                .value((calendarBillingResumptionCharge != null) ? calendarBillingResumptionCharge.value() : "prorated").isRequired(false))
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, SubscriptionResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This will place the subscription in the on_hold state and it will not renew. ## Limitations
-     * You may not place a subscription on hold if the `next_billing` date is within 24 hours.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the SubscriptionResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public SubscriptionResponse pauseSubscription(
-            final String subscriptionId,
-            final PauseRequest body) throws ApiException, IOException {
-        return preparePauseSubscriptionRequest(subscriptionId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for pauseSubscription.
-     */
-    private ApiCall<SubscriptionResponse, ApiException> preparePauseSubscriptionRequest(
-            final String subscriptionId,
-            final PauseRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<SubscriptionResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/hold.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, SubscriptionResponse.class))
@@ -256,11 +166,106 @@ public final class SubscriptionStatusController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, SubscriptionResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Resume a paused (on-hold) subscription. If the normal next renewal date has not passed, the
+     * subscription will return to active and will renew on that date. Otherwise, it will behave
+     * like a reactivation, setting the billing date to 'now' and charging the subscriber.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  calendarBillingResumptionCharge  Optional parameter: (For calendar billing
+     *         subscriptions only) The way that the resumed subscription's charge should be handled
+     * @return    Returns the SubscriptionResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public SubscriptionResponse resumeSubscription(
+            final String subscriptionId,
+            final ResumptionCharge calendarBillingResumptionCharge) throws ApiException, IOException {
+        return prepareResumeSubscriptionRequest(subscriptionId,
+                calendarBillingResumptionCharge).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for resumeSubscription.
+     */
+    private ApiCall<SubscriptionResponse, ApiException> prepareResumeSubscriptionRequest(
+            final String subscriptionId,
+            final ResumptionCharge calendarBillingResumptionCharge) throws IOException {
+        return new ApiCall.Builder<SubscriptionResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/resume.json")
+                        .queryParam(param -> param.key("calendar_billing['resumption_charge']")
+                                .value((calendarBillingResumptionCharge != null) ? calendarBillingResumptionCharge.value() : "prorated").isRequired(false))
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, SubscriptionResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This will place the subscription in the on_hold state and it will not renew. ## Limitations
+     * You may not place a subscription on hold if the `next_billing` date is within 24 hours.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the SubscriptionResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public SubscriptionResponse pauseSubscription(
+            final String subscriptionId,
+            final PauseRequest body) throws ApiException, IOException {
+        return preparePauseSubscriptionRequest(subscriptionId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for pauseSubscription.
+     */
+    private ApiCall<SubscriptionResponse, ApiException> preparePauseSubscriptionRequest(
+            final String subscriptionId,
+            final PauseRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<SubscriptionResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/hold.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, SubscriptionResponse.class))
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -367,7 +372,8 @@ public final class SubscriptionStatusController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -375,91 +381,6 @@ public final class SubscriptionStatusController extends BaseController {
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Chargify offers the ability to cancel a subscription at the end of the current billing
-     * period. This period is set by its current product. Requesting to cancel the subscription at
-     * the end of the period sets the `cancel_at_end_of_period` flag to true. Note that you cannot
-     * set `cancel_at_end_of_period` at subscription creation, or if the subscription is past due.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the DelayedCancellationResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public DelayedCancellationResponse initiateDelayedCancellation(
-            final String subscriptionId,
-            final CancellationRequest body) throws ApiException, IOException {
-        return prepareInitiateDelayedCancellationRequest(subscriptionId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for initiateDelayedCancellation.
-     */
-    private ApiCall<DelayedCancellationResponse, ApiException> prepareInitiateDelayedCancellationRequest(
-            final String subscriptionId,
-            final CancellationRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<DelayedCancellationResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/delayed_cancel.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, DelayedCancellationResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Removing the delayed cancellation on a subscription will ensure that it doesn't get canceled
-     * at the end of the period that it is in. The request will reset the `cancel_at_end_of_period`
-     * flag to `false`. This endpoint is idempotent. If the subscription was not set to cancel in
-     * the future, removing the delayed cancellation has no effect and the call will be successful.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @return    Returns the DelayedCancellationResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public DelayedCancellationResponse stopDelayedCancellation(
-            final String subscriptionId) throws ApiException, IOException {
-        return prepareStopDelayedCancellationRequest(subscriptionId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for stopDelayedCancellation.
-     */
-    private ApiCall<DelayedCancellationResponse, ApiException> prepareStopDelayedCancellationRequest(
-            final String subscriptionId) throws IOException {
-        return new ApiCall.Builder<DelayedCancellationResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/delayed_cancel.json")
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, DelayedCancellationResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -492,7 +413,8 @@ public final class SubscriptionStatusController extends BaseController {
                         .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -555,11 +477,99 @@ public final class SubscriptionStatusController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, RenewalPreviewResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Chargify offers the ability to cancel a subscription at the end of the current billing
+     * period. This period is set by its current product. Requesting to cancel the subscription at
+     * the end of the period sets the `cancel_at_end_of_period` flag to true. Note that you cannot
+     * set `cancel_at_end_of_period` at subscription creation, or if the subscription is past due.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the DelayedCancellationResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public DelayedCancellationResponse initiateDelayedCancellation(
+            final String subscriptionId,
+            final CancellationRequest body) throws ApiException, IOException {
+        return prepareInitiateDelayedCancellationRequest(subscriptionId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for initiateDelayedCancellation.
+     */
+    private ApiCall<DelayedCancellationResponse, ApiException> prepareInitiateDelayedCancellationRequest(
+            final String subscriptionId,
+            final CancellationRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<DelayedCancellationResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/delayed_cancel.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, DelayedCancellationResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Removing the delayed cancellation on a subscription will ensure that it doesn't get canceled
+     * at the end of the period that it is in. The request will reset the `cancel_at_end_of_period`
+     * flag to `false`. This endpoint is idempotent. If the subscription was not set to cancel in
+     * the future, removing the delayed cancellation has no effect and the call will be successful.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @return    Returns the DelayedCancellationResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public DelayedCancellationResponse stopDelayedCancellation(
+            final String subscriptionId) throws ApiException, IOException {
+        return prepareStopDelayedCancellationRequest(subscriptionId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for stopDelayedCancellation.
+     */
+    private ApiCall<DelayedCancellationResponse, ApiException> prepareStopDelayedCancellationRequest(
+            final String subscriptionId) throws IOException {
+        return new ApiCall.Builder<DelayedCancellationResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/delayed_cancel.json")
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, DelayedCancellationResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

@@ -85,7 +85,8 @@ public final class CustomersController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -146,12 +147,89 @@ public final class CustomersController extends BaseController {
                         .queryParam(param -> param.key("q")
                                 .value(input.getQ()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserializeArray(response,
                                         CustomerResponse[].class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Use this method to return the customer object if you have the unique **Reference ID (Your
+     * App)** value handy. It will return a single match.
+     * @param  reference  Required parameter: Customer reference
+     * @return    Returns the CustomerResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public CustomerResponse readCustomerByReference(
+            final String reference) throws ApiException, IOException {
+        return prepareReadCustomerByReferenceRequest(reference).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for readCustomerByReference.
+     */
+    private ApiCall<CustomerResponse, ApiException> prepareReadCustomerByReferenceRequest(
+            final String reference) throws IOException {
+        return new ApiCall.Builder<CustomerResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/customers/lookup.json")
+                        .queryParam(param -> param.key("reference")
+                                .value(reference))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, CustomerResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This method lists all subscriptions that belong to a customer.
+     * @param  customerId  Required parameter: The Chargify id of the customer
+     * @return    Returns the List of SubscriptionResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public List<SubscriptionResponse> listCustomerSubscriptions(
+            final int customerId) throws ApiException, IOException {
+        return prepareListCustomerSubscriptionsRequest(customerId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listCustomerSubscriptions.
+     */
+    private ApiCall<List<SubscriptionResponse>, ApiException> prepareListCustomerSubscriptionsRequest(
+            final int customerId) throws IOException {
+        return new ApiCall.Builder<List<SubscriptionResponse>, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/customers/{customer_id}/subscriptions.json")
+                        .templateParam(param -> param.key("customer_id").value(customerId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserializeArray(response,
+                                        SubscriptionResponse[].class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -183,7 +261,8 @@ public final class CustomersController extends BaseController {
                         .templateParam(param -> param.key("id").value(id).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -226,7 +305,8 @@ public final class CustomersController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -263,84 +343,11 @@ public final class CustomersController extends BaseController {
                         .path("/customers/{id}.json")
                         .templateParam(param -> param.key("id").value(id).isRequired(false)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Use this method to return the customer object if you have the unique **Reference ID (Your
-     * App)** value handy. It will return a single match.
-     * @param  reference  Required parameter: Customer reference
-     * @return    Returns the CustomerResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public CustomerResponse readCustomerByReference(
-            final String reference) throws ApiException, IOException {
-        return prepareReadCustomerByReferenceRequest(reference).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for readCustomerByReference.
-     */
-    private ApiCall<CustomerResponse, ApiException> prepareReadCustomerByReferenceRequest(
-            final String reference) throws IOException {
-        return new ApiCall.Builder<CustomerResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/customers/lookup.json")
-                        .queryParam(param -> param.key("reference")
-                                .value(reference))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, CustomerResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This method lists all subscriptions that belong to a customer.
-     * @param  customerId  Required parameter: The Chargify id of the customer
-     * @return    Returns the List of SubscriptionResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public List<SubscriptionResponse> listCustomerSubscriptions(
-            final int customerId) throws ApiException, IOException {
-        return prepareListCustomerSubscriptionsRequest(customerId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for listCustomerSubscriptions.
-     */
-    private ApiCall<List<SubscriptionResponse>, ApiException> prepareListCustomerSubscriptionsRequest(
-            final int customerId) throws IOException {
-        return new ApiCall.Builder<List<SubscriptionResponse>, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/customers/{customer_id}/subscriptions.json")
-                        .templateParam(param -> param.key("customer_id").value(customerId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserializeArray(response,
-                                        SubscriptionResponse[].class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

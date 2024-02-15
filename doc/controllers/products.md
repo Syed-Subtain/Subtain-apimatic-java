@@ -10,12 +10,93 @@ ProductsController productsController = client.getProductsController();
 
 ## Methods
 
+* [Archive Product](../../doc/controllers/products.md#archive-product)
 * [Create Product](../../doc/controllers/products.md#create-product)
 * [Read Product](../../doc/controllers/products.md#read-product)
 * [Update Product](../../doc/controllers/products.md#update-product)
-* [Archive Product](../../doc/controllers/products.md#archive-product)
 * [Read Product by Handle](../../doc/controllers/products.md#read-product-by-handle)
 * [List Products](../../doc/controllers/products.md#list-products)
+
+
+# Archive Product
+
+Sending a DELETE request to this endpoint will archive the product. All current subscribers will be unffected; their subscription/purchase will continue to be charged monthly.
+
+This will restrict the option to chose the product for purchase via the Billing Portal, as well as disable Public Signup Pages for the product.
+
+```java
+ProductResponse archiveProduct(
+    final int productId)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `productId` | `int` | Template, Required | The Chargify id of the product |
+
+## Response Type
+
+[`ProductResponse`](../../doc/models/product-response.md)
+
+## Example Usage
+
+```java
+int productId = 202;
+
+try {
+    ProductResponse result = productsController.archiveProduct(productId);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "product": {
+    "id": 4535638,
+    "name": "Business Monthly",
+    "handle": null,
+    "description": "Business Monthly",
+    "accounting_code": "",
+    "request_credit_card": true,
+    "expiration_interval": null,
+    "expiration_interval_unit": "never",
+    "created_at": "2017-08-25T10:25:31-05:00",
+    "updated_at": "2018-01-16T13:02:44-06:00",
+    "price_in_cents": 4900,
+    "interval": 1,
+    "interval_unit": "month",
+    "initial_charge_in_cents": null,
+    "trial_price_in_cents": 0,
+    "trial_interval": 1,
+    "trial_interval_unit": "day",
+    "archived_at": "2018-01-16T13:02:44-06:00",
+    "require_credit_card": false,
+    "return_params": "",
+    "taxable": false,
+    "update_return_url": "",
+    "tax_code": "",
+    "initial_charge_after_trial": false,
+    "version_number": 1,
+    "update_return_params": "",
+    "product_family": {
+      "id": 1025627,
+      "name": "Acme Products",
+      "description": "",
+      "handle": "acme-products",
+      "accounting_code": null
+    },
+    "public_signup_pages": [],
+    "product_price_point_name": "Default"
+  }
+}
+```
 
 
 # Create Product
@@ -300,87 +381,6 @@ try {
 | 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
 
 
-# Archive Product
-
-Sending a DELETE request to this endpoint will archive the product. All current subscribers will be unffected; their subscription/purchase will continue to be charged monthly.
-
-This will restrict the option to chose the product for purchase via the Billing Portal, as well as disable Public Signup Pages for the product.
-
-```java
-ProductResponse archiveProduct(
-    final int productId)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `productId` | `int` | Template, Required | The Chargify id of the product |
-
-## Response Type
-
-[`ProductResponse`](../../doc/models/product-response.md)
-
-## Example Usage
-
-```java
-int productId = 202;
-
-try {
-    ProductResponse result = productsController.archiveProduct(productId);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "product": {
-    "id": 4535638,
-    "name": "Business Monthly",
-    "handle": null,
-    "description": "Business Monthly",
-    "accounting_code": "",
-    "request_credit_card": true,
-    "expiration_interval": null,
-    "expiration_interval_unit": "never",
-    "created_at": "2017-08-25T10:25:31-05:00",
-    "updated_at": "2018-01-16T13:02:44-06:00",
-    "price_in_cents": 4900,
-    "interval": 1,
-    "interval_unit": "month",
-    "initial_charge_in_cents": null,
-    "trial_price_in_cents": 0,
-    "trial_interval": 1,
-    "trial_interval_unit": "day",
-    "archived_at": "2018-01-16T13:02:44-06:00",
-    "require_credit_card": false,
-    "return_params": "",
-    "taxable": false,
-    "update_return_url": "",
-    "tax_code": "",
-    "initial_charge_after_trial": false,
-    "version_number": 1,
-    "update_return_params": "",
-    "product_family": {
-      "id": 1025627,
-      "name": "Acme Products",
-      "description": "",
-      "handle": "acme-products",
-      "accounting_code": null
-    },
-    "public_signup_pages": [],
-    "product_price_point_name": "Default"
-  }
-}
-```
-
-
 # Read Product by Handle
 
 This method allows to retrieve a Product object by its `api_handle`.
@@ -502,8 +502,8 @@ List<ProductResponse> listProducts(
 | `endDatetime` | `String` | Query, Optional | The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns products with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site''s time zone will be used. If provided, this parameter will be used instead of end_date. |
 | `startDate` | `String` | Query, Optional | The start date (format YYYY-MM-DD) with which to filter the date_field. Returns products with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. |
 | `startDatetime` | `String` | Query, Optional | The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns products with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site''s time zone will be used. If provided, this parameter will be used instead of start_date. |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
 | `includeArchived` | `Boolean` | Query, Optional | Include archived products. Use in query: `include_archived=true`. |
 | `include` | [`ListProductsInclude`](../../doc/models/list-products-include.md) | Query, Optional | Allows including additional data in the response. Use in query `include=prepaid_product_price_point`. |
 | `filterPrepaidProductPricePointProductPricePointId` | [`IncludeNotNull`](../../doc/models/include-not-null.md) | Query, Optional | Allows fetching products only if a prepaid product price point is present or not. To use this filter you also have to include the following param in the request `include=prepaid_product_price_point`. Use in query `filter[prepaid_product_price_point][product_price_point_id]=not_null`. |

@@ -97,7 +97,8 @@ public final class CustomFieldsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -110,44 +111,88 @@ public final class CustomFieldsController extends BaseController {
     }
 
     /**
-     * This endpoint lists metafields associated with a site. The metafield description and usage is
-     * contained in the response.
-     * @param  input  ListMetafieldsInput object containing request parameters
-     * @return    Returns the ListMetafieldsResponse response from the API call
+     * Use the following method to delete a metafield. This will remove the metafield from the Site.
+     * Additionally, this will remove the metafield and associated metadata with all Subscriptions
+     * on the Site.
+     * @param  resourceType  Required parameter: the resource type to which the metafields belong
+     * @param  name  Optional parameter: The name of the metafield to be deleted
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public ListMetafieldsResponse listMetafields(
-            final ListMetafieldsInput input) throws ApiException, IOException {
-        return prepareListMetafieldsRequest(input).execute();
+    public void deleteMetafield(
+            final ResourceType resourceType,
+            final String name) throws ApiException, IOException {
+        prepareDeleteMetafieldRequest(resourceType, name).execute();
     }
 
     /**
-     * Builds the ApiCall object for listMetafields.
+     * Builds the ApiCall object for deleteMetafield.
      */
-    private ApiCall<ListMetafieldsResponse, ApiException> prepareListMetafieldsRequest(
-            final ListMetafieldsInput input) throws IOException {
-        return new ApiCall.Builder<ListMetafieldsResponse, ApiException>()
+    private ApiCall<Void, ApiException> prepareDeleteMetafieldRequest(
+            final ResourceType resourceType,
+            final String name) throws IOException {
+        return new ApiCall.Builder<Void, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
                         .path("/{resource_type}/metafields.json")
                         .queryParam(param -> param.key("name")
-                                .value(input.getName()).isRequired(false))
+                                .value(name).isRequired(false))
+                        .templateParam(param -> param.key("resource_type").value((resourceType != null) ? resourceType.value() : null)
+                                .shouldEncode(true))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
+                        .localErrorCase("404",
+                                 ErrorCase.setReason("Not Found",
+                                (reason, context) -> new ApiException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This request will list all of the metadata belonging to a particular resource (ie.
+     * subscription, customer) that is specified. ## Metadata Data This endpoint will also display
+     * the current stats of your metadata to use as a tool for pagination.
+     * @param  input  ReadMetadataInput object containing request parameters
+     * @return    Returns the PaginatedMetadata response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public PaginatedMetadata readMetadata(
+            final ReadMetadataInput input) throws ApiException, IOException {
+        return prepareReadMetadataRequest(input).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for readMetadata.
+     */
+    private ApiCall<PaginatedMetadata, ApiException> prepareReadMetadataRequest(
+            final ReadMetadataInput input) throws IOException {
+        return new ApiCall.Builder<PaginatedMetadata, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/{resource_type}/{resource_id}/metadata.json")
                         .queryParam(param -> param.key("page")
                                 .value(input.getPage()).isRequired(false))
                         .queryParam(param -> param.key("per_page")
                                 .value(input.getPerPage()).isRequired(false))
-                        .queryParam(param -> param.key("direction")
-                                .value((input.getDirection() != null) ? input.getDirection().value() : null).isRequired(false))
                         .templateParam(param -> param.key("resource_type").value((input.getResourceType() != null) ? input.getResourceType().value() : null)
                                 .shouldEncode(true))
+                        .templateParam(param -> param.key("resource_id").value(input.getResourceId())
+                                .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserialize(response, ListMetafieldsResponse.class))
+                                response -> ApiHelper.deserialize(response, PaginatedMetadata.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -199,55 +244,13 @@ public final class CustomFieldsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserializeArray(response,
                                         Metafield[].class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Use the following method to delete a metafield. This will remove the metafield from the Site.
-     * Additionally, this will remove the metafield and associated metadata with all Subscriptions
-     * on the Site.
-     * @param  resourceType  Required parameter: the resource type to which the metafields belong
-     * @param  name  Optional parameter: The name of the metafield to be deleted
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void deleteMetafield(
-            final ResourceType resourceType,
-            final String name) throws ApiException, IOException {
-        prepareDeleteMetafieldRequest(resourceType, name).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for deleteMetafield.
-     */
-    private ApiCall<Void, ApiException> prepareDeleteMetafieldRequest(
-            final ResourceType resourceType,
-            final String name) throws IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/{resource_type}/metafields.json")
-                        .queryParam(param -> param.key("name")
-                                .value(name).isRequired(false))
-                        .templateParam(param -> param.key("resource_type").value((resourceType != null) ? resourceType.value() : null)
-                                .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
-                        .localErrorCase("404",
-                                 ErrorCase.setReason("Not Found",
-                                (reason, context) -> new ApiException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -314,56 +317,13 @@ public final class CustomFieldsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserializeArray(response,
                                         Metadata[].class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This request will list all of the metadata belonging to a particular resource (ie.
-     * subscription, customer) that is specified. ## Metadata Data This endpoint will also display
-     * the current stats of your metadata to use as a tool for pagination.
-     * @param  input  ReadMetadataInput object containing request parameters
-     * @return    Returns the PaginatedMetadata response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public PaginatedMetadata readMetadata(
-            final ReadMetadataInput input) throws ApiException, IOException {
-        return prepareReadMetadataRequest(input).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for readMetadata.
-     */
-    private ApiCall<PaginatedMetadata, ApiException> prepareReadMetadataRequest(
-            final ReadMetadataInput input) throws IOException {
-        return new ApiCall.Builder<PaginatedMetadata, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/{resource_type}/{resource_id}/metadata.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .templateParam(param -> param.key("resource_type").value((input.getResourceType() != null) ? input.getResourceType().value() : null)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("resource_id").value(input.getResourceId())
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, PaginatedMetadata.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -414,7 +374,8 @@ public final class CustomFieldsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -473,7 +434,8 @@ public final class CustomFieldsController extends BaseController {
                                 .shouldEncode(true))
                         .templateParam(param -> param.key("resource_id").value(resourceId)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)
@@ -536,7 +498,8 @@ public final class CustomFieldsController extends BaseController {
                         .templateParam(param -> param.key("resource_type").value((input.getResourceType() != null) ? input.getResourceType().value() : null)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -544,6 +507,52 @@ public final class CustomFieldsController extends BaseController {
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.PLAIN))
+                .build();
+    }
+
+    /**
+     * This endpoint lists metafields associated with a site. The metafield description and usage is
+     * contained in the response.
+     * @param  input  ListMetafieldsInput object containing request parameters
+     * @return    Returns the ListMetafieldsResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ListMetafieldsResponse listMetafields(
+            final ListMetafieldsInput input) throws ApiException, IOException {
+        return prepareListMetafieldsRequest(input).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listMetafields.
+     */
+    private ApiCall<ListMetafieldsResponse, ApiException> prepareListMetafieldsRequest(
+            final ListMetafieldsInput input) throws IOException {
+        return new ApiCall.Builder<ListMetafieldsResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/{resource_type}/metafields.json")
+                        .queryParam(param -> param.key("name")
+                                .value(input.getName()).isRequired(false))
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .queryParam(param -> param.key("direction")
+                                .value((input.getDirection() != null) ? input.getDirection().value() : null).isRequired(false))
+                        .templateParam(param -> param.key("resource_type").value((input.getResourceType() != null) ? input.getResourceType().value() : null)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ListMetafieldsResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
                 .build();
     }
 }

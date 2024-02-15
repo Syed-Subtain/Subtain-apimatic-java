@@ -45,54 +45,6 @@ public final class SubscriptionGroupsController extends BaseController {
     }
 
     /**
-     * Create multiple subscriptions at once under the same customer and consolidate them into a
-     * subscription group. You must provide one and only one of the
-     * `payer_id`/`payer_reference`/`payer_attributes` for the customer attached to the group. You
-     * must provide one and only one of the
-     * `payment_profile_id`/`credit_card_attributes`/`bank_account_attributes` for the payment
-     * profile attached to the group. Only one of the `subscriptions` can have `"primary": true`
-     * attribute set. When passing product to a subscription you can use either `product_id` or
-     * `product_handle` or `offer_id`. You can also use `custom_price` instead.
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the SubscriptionGroupSignupResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public SubscriptionGroupSignupResponse signupWithSubscriptionGroup(
-            final SubscriptionGroupSignupRequest body) throws ApiException, IOException {
-        return prepareSignupWithSubscriptionGroupRequest(body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for signupWithSubscriptionGroup.
-     */
-    private ApiCall<SubscriptionGroupSignupResponse, ApiException> prepareSignupWithSubscriptionGroupRequest(
-            final SubscriptionGroupSignupRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<SubscriptionGroupSignupResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscription_groups/signup.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, SubscriptionGroupSignupResponse.class))
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new SubscriptionGroupSignupErrorResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
      * Creates a subscription group with given members.
      * @param  body  Optional parameter: Example:
      * @return    Returns the SubscriptionGroupResponse response from the API call
@@ -119,7 +71,8 @@ public final class SubscriptionGroupsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -127,50 +80,6 @@ public final class SubscriptionGroupsController extends BaseController {
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new SingleStringErrorResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Returns an array of subscription groups for the site. The response is paginated and will
-     * return a `meta` key with pagination information. #### Account Balance Information Account
-     * balance information for the subscription groups is not returned by default. If this
-     * information is desired, the `include[]=account_balances` parameter must be provided with the
-     * request.
-     * @param  input  ListSubscriptionGroupsInput object containing request parameters
-     * @return    Returns the ListSubscriptionGroupsResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ListSubscriptionGroupsResponse listSubscriptionGroups(
-            final ListSubscriptionGroupsInput input) throws ApiException, IOException {
-        return prepareListSubscriptionGroupsRequest(input).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for listSubscriptionGroups.
-     */
-    private ApiCall<ListSubscriptionGroupsResponse, ApiException> prepareListSubscriptionGroupsRequest(
-            final ListSubscriptionGroupsInput input) throws IOException {
-        return new ApiCall.Builder<ListSubscriptionGroupsResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscription_groups.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .queryParam(param -> param.key("include")
-                                .value(input.getInclude()).isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ListSubscriptionGroupsResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -205,7 +114,8 @@ public final class SubscriptionGroupsController extends BaseController {
                         .templateParam(param -> param.key("uid").value(uid)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -217,48 +127,42 @@ public final class SubscriptionGroupsController extends BaseController {
     }
 
     /**
-     * Use this endpoint to update subscription group members. `"member_ids": []` should contain an
-     * array of both subscription IDs to set as group members and subscription IDs already present
-     * in the groups. Not including them will result in removing them from subscription group. To
-     * clean up members, just leave the array empty.
-     * @param  uid  Required parameter: The uid of the subscription group
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the SubscriptionGroupResponse response from the API call
+     * For sites making use of the [Relationship
+     * Billing](https://chargify.zendesk.com/hc/en-us/articles/4407737494171) and [Customer
+     * Hierarchy](https://chargify.zendesk.com/hc/en-us/articles/4407746683291) features, it is
+     * possible to remove existing subscription from subscription group.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public SubscriptionGroupResponse updateSubscriptionGroupMembers(
-            final String uid,
-            final UpdateSubscriptionGroupRequest body) throws ApiException, IOException {
-        return prepareUpdateSubscriptionGroupMembersRequest(uid, body).execute();
+    public void removeSubscriptionFromGroup(
+            final String subscriptionId) throws ApiException, IOException {
+        prepareRemoveSubscriptionFromGroupRequest(subscriptionId).execute();
     }
 
     /**
-     * Builds the ApiCall object for updateSubscriptionGroupMembers.
+     * Builds the ApiCall object for removeSubscriptionFromGroup.
      */
-    private ApiCall<SubscriptionGroupResponse, ApiException> prepareUpdateSubscriptionGroupMembersRequest(
-            final String uid,
-            final UpdateSubscriptionGroupRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<SubscriptionGroupResponse, ApiException>()
+    private ApiCall<Void, ApiException> prepareRemoveSubscriptionFromGroupRequest(
+            final String subscriptionId) throws IOException {
+        return new ApiCall.Builder<Void, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscription_groups/{uid}.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("uid").value(uid)
+                        .path("/subscriptions/{subscription_id}/group.json")
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
                                 .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.PUT))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, SubscriptionGroupResponse.class))
+                        .nullify404(false)
+                        .localErrorCase("404",
+                                 ErrorCase.setReason("Not Found",
+                                (reason, context) -> new ApiException(reason, context)))
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new SubscriptionGroupUpdateErrorResponseException(reason, context)))
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -290,7 +194,8 @@ public final class SubscriptionGroupsController extends BaseController {
                         .templateParam(param -> param.key("uid").value(uid)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -328,7 +233,8 @@ public final class SubscriptionGroupsController extends BaseController {
                         .queryParam(param -> param.key("subscription_id")
                                 .value(subscriptionId))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -390,7 +296,8 @@ public final class SubscriptionGroupsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -402,41 +309,143 @@ public final class SubscriptionGroupsController extends BaseController {
     }
 
     /**
-     * For sites making use of the [Relationship
-     * Billing](https://chargify.zendesk.com/hc/en-us/articles/4407737494171) and [Customer
-     * Hierarchy](https://chargify.zendesk.com/hc/en-us/articles/4407746683291) features, it is
-     * possible to remove existing subscription from subscription group.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * Create multiple subscriptions at once under the same customer and consolidate them into a
+     * subscription group. You must provide one and only one of the
+     * `payer_id`/`payer_reference`/`payer_attributes` for the customer attached to the group. You
+     * must provide one and only one of the
+     * `payment_profile_id`/`credit_card_attributes`/`bank_account_attributes` for the payment
+     * profile attached to the group. Only one of the `subscriptions` can have `"primary": true`
+     * attribute set. When passing product to a subscription you can use either `product_id` or
+     * `product_handle` or `offer_id`. You can also use `custom_price` instead.
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the SubscriptionGroupSignupResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public void removeSubscriptionFromGroup(
-            final String subscriptionId) throws ApiException, IOException {
-        prepareRemoveSubscriptionFromGroupRequest(subscriptionId).execute();
+    public SubscriptionGroupSignupResponse signupWithSubscriptionGroup(
+            final SubscriptionGroupSignupRequest body) throws ApiException, IOException {
+        return prepareSignupWithSubscriptionGroupRequest(body).execute();
     }
 
     /**
-     * Builds the ApiCall object for removeSubscriptionFromGroup.
+     * Builds the ApiCall object for signupWithSubscriptionGroup.
      */
-    private ApiCall<Void, ApiException> prepareRemoveSubscriptionFromGroupRequest(
-            final String subscriptionId) throws IOException {
-        return new ApiCall.Builder<Void, ApiException>()
+    private ApiCall<SubscriptionGroupSignupResponse, ApiException> prepareSignupWithSubscriptionGroupRequest(
+            final SubscriptionGroupSignupRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<SubscriptionGroupSignupResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/group.json")
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
+                        .path("/subscription_groups/signup.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
-                        .localErrorCase("404",
-                                 ErrorCase.setReason("Not Found",
-                                (reason, context) -> new ApiException(reason, context)))
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, SubscriptionGroupSignupResponse.class))
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                                (reason, context) -> new SubscriptionGroupSignupErrorResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Returns an array of subscription groups for the site. The response is paginated and will
+     * return a `meta` key with pagination information. #### Account Balance Information Account
+     * balance information for the subscription groups is not returned by default. If this
+     * information is desired, the `include[]=account_balances` parameter must be provided with the
+     * request.
+     * @param  input  ListSubscriptionGroupsInput object containing request parameters
+     * @return    Returns the ListSubscriptionGroupsResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ListSubscriptionGroupsResponse listSubscriptionGroups(
+            final ListSubscriptionGroupsInput input) throws ApiException, IOException {
+        return prepareListSubscriptionGroupsRequest(input).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listSubscriptionGroups.
+     */
+    private ApiCall<ListSubscriptionGroupsResponse, ApiException> prepareListSubscriptionGroupsRequest(
+            final ListSubscriptionGroupsInput input) throws IOException {
+        return new ApiCall.Builder<ListSubscriptionGroupsResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscription_groups.json")
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .queryParam(param -> param.key("include")
+                                .value(input.getInclude()).isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ListSubscriptionGroupsResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Use this endpoint to update subscription group members. `"member_ids": []` should contain an
+     * array of both subscription IDs to set as group members and subscription IDs already present
+     * in the groups. Not including them will result in removing them from subscription group. To
+     * clean up members, just leave the array empty.
+     * @param  uid  Required parameter: The uid of the subscription group
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the SubscriptionGroupResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public SubscriptionGroupResponse updateSubscriptionGroupMembers(
+            final String uid,
+            final UpdateSubscriptionGroupRequest body) throws ApiException, IOException {
+        return prepareUpdateSubscriptionGroupMembersRequest(uid, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for updateSubscriptionGroupMembers.
+     */
+    private ApiCall<SubscriptionGroupResponse, ApiException> prepareUpdateSubscriptionGroupMembersRequest(
+            final String uid,
+            final UpdateSubscriptionGroupRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<SubscriptionGroupResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscription_groups/{uid}.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("uid").value(uid)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.PUT))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, SubscriptionGroupResponse.class))
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new SubscriptionGroupUpdateErrorResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

@@ -38,48 +38,75 @@ public final class ReasonCodesController extends BaseController {
     }
 
     /**
-     * # Reason Codes Intro ReasonCodes are a way to gain a high level view of why your customers
-     * are cancelling the subcription to your product or service. Add a set of churn reason codes to
-     * be displayed in-app and/or the Chargify Billing Portal. As your subscribers decide to cancel
-     * their subscription, learn why they decided to cancel. ## Reason Code Documentation Full
-     * documentation on how Reason Codes operate within Chargify can be located under the following
-     * links. [Churn Reason
-     * Codes](https://chargify.zendesk.com/hc/en-us/articles/4407896775579#churn-reason-codes) ##
-     * Create Reason Code This method gives a merchant the option to create a reason codes for a
-     * given Site.
-     * @param  body  Optional parameter: Example:
+     * This method gives a merchant the option to retrieve a list of a particular code for a given
+     * Site by providing the unique numerical ID of the code.
+     * @param  reasonCodeId  Required parameter: The Chargify id of the reason code
      * @return    Returns the ReasonCodeResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public ReasonCodeResponse createReasonCode(
-            final CreateReasonCodeRequest body) throws ApiException, IOException {
-        return prepareCreateReasonCodeRequest(body).execute();
+    public ReasonCodeResponse readReasonCode(
+            final int reasonCodeId) throws ApiException, IOException {
+        return prepareReadReasonCodeRequest(reasonCodeId).execute();
     }
 
     /**
-     * Builds the ApiCall object for createReasonCode.
+     * Builds the ApiCall object for readReasonCode.
      */
-    private ApiCall<ReasonCodeResponse, ApiException> prepareCreateReasonCodeRequest(
-            final CreateReasonCodeRequest body) throws JsonProcessingException, IOException {
+    private ApiCall<ReasonCodeResponse, ApiException> prepareReadReasonCodeRequest(
+            final int reasonCodeId) throws IOException {
         return new ApiCall.Builder<ReasonCodeResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/reason_codes.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
+                        .path("/reason_codes/{reason_code_id}.json")
+                        .templateParam(param -> param.key("reason_code_id").value(reasonCodeId).isRequired(false)
+                                .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, ReasonCodeResponse.class))
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This method gives a merchant the option to delete one reason code from the Churn Reason
+     * Codes. This code will be immediately removed. This action is not reversable.
+     * @param  reasonCodeId  Required parameter: The Chargify id of the reason code
+     * @return    Returns the ReasonCodesJsonResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ReasonCodesJsonResponse deleteReasonCode(
+            final int reasonCodeId) throws ApiException, IOException {
+        return prepareDeleteReasonCodeRequest(reasonCodeId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for deleteReasonCode.
+     */
+    private ApiCall<ReasonCodesJsonResponse, ApiException> prepareDeleteReasonCodeRequest(
+            final int reasonCodeId) throws IOException {
+        return new ApiCall.Builder<ReasonCodesJsonResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/reason_codes/{reason_code_id}.json")
+                        .templateParam(param -> param.key("reason_code_id").value(reasonCodeId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ReasonCodesJsonResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -114,49 +141,13 @@ public final class ReasonCodesController extends BaseController {
                         .queryParam(param -> param.key("per_page")
                                 .value(input.getPerPage()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserializeArray(response,
                                         ReasonCodeResponse[].class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This method gives a merchant the option to retrieve a list of a particular code for a given
-     * Site by providing the unique numerical ID of the code.
-     * @param  reasonCodeId  Required parameter: The Chargify id of the reason code
-     * @return    Returns the ReasonCodeResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ReasonCodeResponse readReasonCode(
-            final int reasonCodeId) throws ApiException, IOException {
-        return prepareReadReasonCodeRequest(reasonCodeId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for readReasonCode.
-     */
-    private ApiCall<ReasonCodeResponse, ApiException> prepareReadReasonCodeRequest(
-            final int reasonCodeId) throws IOException {
-        return new ApiCall.Builder<ReasonCodeResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/reason_codes/{reason_code_id}.json")
-                        .templateParam(param -> param.key("reason_code_id").value(reasonCodeId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ReasonCodeResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -195,7 +186,8 @@ public final class ReasonCodesController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -207,36 +199,49 @@ public final class ReasonCodesController extends BaseController {
     }
 
     /**
-     * This method gives a merchant the option to delete one reason code from the Churn Reason
-     * Codes. This code will be immediately removed. This action is not reversable.
-     * @param  reasonCodeId  Required parameter: The Chargify id of the reason code
-     * @return    Returns the ReasonCodesJsonResponse response from the API call
+     * # Reason Codes Intro ReasonCodes are a way to gain a high level view of why your customers
+     * are cancelling the subcription to your product or service. Add a set of churn reason codes to
+     * be displayed in-app and/or the Chargify Billing Portal. As your subscribers decide to cancel
+     * their subscription, learn why they decided to cancel. ## Reason Code Documentation Full
+     * documentation on how Reason Codes operate within Chargify can be located under the following
+     * links. [Churn Reason
+     * Codes](https://chargify.zendesk.com/hc/en-us/articles/4407896775579#churn-reason-codes) ##
+     * Create Reason Code This method gives a merchant the option to create a reason codes for a
+     * given Site.
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the ReasonCodeResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public ReasonCodesJsonResponse deleteReasonCode(
-            final int reasonCodeId) throws ApiException, IOException {
-        return prepareDeleteReasonCodeRequest(reasonCodeId).execute();
+    public ReasonCodeResponse createReasonCode(
+            final CreateReasonCodeRequest body) throws ApiException, IOException {
+        return prepareCreateReasonCodeRequest(body).execute();
     }
 
     /**
-     * Builds the ApiCall object for deleteReasonCode.
+     * Builds the ApiCall object for createReasonCode.
      */
-    private ApiCall<ReasonCodesJsonResponse, ApiException> prepareDeleteReasonCodeRequest(
-            final int reasonCodeId) throws IOException {
-        return new ApiCall.Builder<ReasonCodesJsonResponse, ApiException>()
+    private ApiCall<ReasonCodeResponse, ApiException> prepareCreateReasonCodeRequest(
+            final CreateReasonCodeRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<ReasonCodeResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/reason_codes/{reason_code_id}.json")
-                        .templateParam(param -> param.key("reason_code_id").value(reasonCodeId).isRequired(false)
-                                .shouldEncode(true))
+                        .path("/reason_codes.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserialize(response, ReasonCodesJsonResponse.class))
+                                response -> ApiHelper.deserialize(response, ReasonCodeResponse.class))
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

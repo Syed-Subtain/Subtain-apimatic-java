@@ -34,38 +34,38 @@ public final class SitesController extends BaseController {
     }
 
     /**
-     * This endpoint allows you to fetch some site data. Full documentation on Sites in the Chargify
-     * UI can be located [here](https://chargify.zendesk.com/hc/en-us/articles/4407870738587).
-     * Specifically, the [Clearing Site
-     * Data](https://maxio-chargify.zendesk.com/hc/en-us/articles/5405428327309) section is
-     * extremely relevant to this endpoint documentation. #### Relationship invoicing enabled If
-     * site has RI enabled then you will see more settings like: "customer_hierarchy_enabled": true,
-     * "whopays_enabled": true, "whopays_default_payer": "self" You can read more about these
-     * settings here: [Who Pays &amp; Customer
-     * Hierarchy](https://chargify.zendesk.com/hc/en-us/articles/4407746683291).
-     * @return    Returns the SiteResponse response from the API call
+     * This endpoint returns public keys used for Chargify.js.
+     * @param  input  ListChargifyJsPublicKeysInput object containing request parameters
+     * @return    Returns the ListPublicKeysResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public SiteResponse readSite() throws ApiException, IOException {
-        return prepareReadSiteRequest().execute();
+    public ListPublicKeysResponse listChargifyJsPublicKeys(
+            final ListChargifyJsPublicKeysInput input) throws ApiException, IOException {
+        return prepareListChargifyJsPublicKeysRequest(input).execute();
     }
 
     /**
-     * Builds the ApiCall object for readSite.
+     * Builds the ApiCall object for listChargifyJsPublicKeys.
      */
-    private ApiCall<SiteResponse, ApiException> prepareReadSiteRequest() throws IOException {
-        return new ApiCall.Builder<SiteResponse, ApiException>()
+    private ApiCall<ListPublicKeysResponse, ApiException> prepareListChargifyJsPublicKeysRequest(
+            final ListChargifyJsPublicKeysInput input) throws IOException {
+        return new ApiCall.Builder<ListPublicKeysResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/site.json")
+                        .path("/chargify_js_keys.json")
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserialize(response, SiteResponse.class))
+                                response -> ApiHelper.deserialize(response, ListPublicKeysResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -102,7 +102,8 @@ public final class SitesController extends BaseController {
                         .path("/sites/clear_data.json")
                         .queryParam(param -> param.key("cleanup_scope")
                                 .value((cleanupScope != null) ? cleanupScope.value() : "all").isRequired(false))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)
@@ -116,37 +117,39 @@ public final class SitesController extends BaseController {
     }
 
     /**
-     * This endpoint returns public keys used for Chargify.js.
-     * @param  input  ListChargifyJsPublicKeysInput object containing request parameters
-     * @return    Returns the ListPublicKeysResponse response from the API call
+     * This endpoint allows you to fetch some site data. Full documentation on Sites in the Chargify
+     * UI can be located [here](https://chargify.zendesk.com/hc/en-us/articles/4407870738587).
+     * Specifically, the [Clearing Site
+     * Data](https://maxio-chargify.zendesk.com/hc/en-us/articles/5405428327309) section is
+     * extremely relevant to this endpoint documentation. #### Relationship invoicing enabled If
+     * site has RI enabled then you will see more settings like: "customer_hierarchy_enabled": true,
+     * "whopays_enabled": true, "whopays_default_payer": "self" You can read more about these
+     * settings here: [Who Pays &amp; Customer
+     * Hierarchy](https://chargify.zendesk.com/hc/en-us/articles/4407746683291).
+     * @return    Returns the SiteResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public ListPublicKeysResponse listChargifyJsPublicKeys(
-            final ListChargifyJsPublicKeysInput input) throws ApiException, IOException {
-        return prepareListChargifyJsPublicKeysRequest(input).execute();
+    public SiteResponse readSite() throws ApiException, IOException {
+        return prepareReadSiteRequest().execute();
     }
 
     /**
-     * Builds the ApiCall object for listChargifyJsPublicKeys.
+     * Builds the ApiCall object for readSite.
      */
-    private ApiCall<ListPublicKeysResponse, ApiException> prepareListChargifyJsPublicKeysRequest(
-            final ListChargifyJsPublicKeysInput input) throws IOException {
-        return new ApiCall.Builder<ListPublicKeysResponse, ApiException>()
+    private ApiCall<SiteResponse, ApiException> prepareReadSiteRequest() throws IOException {
+        return new ApiCall.Builder<SiteResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/chargify_js_keys.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
+                        .path("/site.json")
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
-                                response -> ApiHelper.deserialize(response, ListPublicKeysResponse.class))
+                                response -> ApiHelper.deserialize(response, SiteResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

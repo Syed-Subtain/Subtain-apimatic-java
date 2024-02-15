@@ -11,14 +11,14 @@ CustomFieldsController customFieldsController = client.getCustomFieldsController
 ## Methods
 
 * [Create Metafields](../../doc/controllers/custom-fields.md#create-metafields)
-* [List Metafields](../../doc/controllers/custom-fields.md#list-metafields)
-* [Update Metafield](../../doc/controllers/custom-fields.md#update-metafield)
 * [Delete Metafield](../../doc/controllers/custom-fields.md#delete-metafield)
-* [Create Metadata](../../doc/controllers/custom-fields.md#create-metadata)
 * [Read Metadata](../../doc/controllers/custom-fields.md#read-metadata)
+* [Update Metafield](../../doc/controllers/custom-fields.md#update-metafield)
+* [Create Metadata](../../doc/controllers/custom-fields.md#create-metadata)
 * [Update Metadata](../../doc/controllers/custom-fields.md#update-metadata)
 * [Delete Metadata](../../doc/controllers/custom-fields.md#delete-metadata)
 * [List Metadata](../../doc/controllers/custom-fields.md#list-metadata)
+* [List Metafields](../../doc/controllers/custom-fields.md#list-metafields)
 
 
 # Create Metafields
@@ -131,13 +131,16 @@ try {
 ```
 
 
-# List Metafields
+# Delete Metafield
 
-This endpoint lists metafields associated with a site. The metafield description and usage is contained in the response.
+Use the following method to delete a metafield. This will remove the metafield from the Site.
+
+Additionally, this will remove the metafield and associated metadata with all Subscriptions on the Site.
 
 ```java
-ListMetafieldsResponse listMetafields(
-    final ListMetafieldsInput input)
+Void deleteMetafield(
+    final ResourceType resourceType,
+    final String name)
 ```
 
 ## Parameters
@@ -145,28 +148,19 @@ ListMetafieldsResponse listMetafields(
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
 | `resourceType` | [`ResourceType`](../../doc/models/resource-type.md) | Template, Required | the resource type to which the metafields belong |
-| `name` | `String` | Query, Optional | filter by the name of the metafield |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
-| `direction` | [`ListMetafieldsInputDirection`](../../doc/models/containers/list-metafields-input-direction.md) | Query, Optional | This is a container for one-of cases. |
+| `name` | `String` | Query, Optional | The name of the metafield to be deleted |
 
 ## Response Type
 
-[`ListMetafieldsResponse`](../../doc/models/list-metafields-response.md)
+`void`
 
 ## Example Usage
 
 ```java
-ListMetafieldsInput listMetafieldsInput = new ListMetafieldsInput.Builder(
-    ResourceType.SUBSCRIPTIONS
-)
-.page(2)
-.perPage(50)
-.build();
+ResourceType resourceType = ResourceType.SUBSCRIPTIONS;
 
 try {
-    ListMetafieldsResponse result = customFieldsController.listMetafields(listMetafieldsInput);
-    System.out.println(result);
+    customFieldsController.deleteMetafield(resourceType, null);
 } catch (ApiException e) {
     e.printStackTrace();
 } catch (IOException e) {
@@ -174,31 +168,57 @@ try {
 }
 ```
 
-## Example Response *(as JSON)*
+## Errors
 
-```json
-{
-  "total_count": 0,
-  "current_page": 0,
-  "total_pages": 0,
-  "per_page": 0,
-  "metafields": [
-    {
-      "id": 0,
-      "name": "string",
-      "scope": {
-        "csv": "0",
-        "statements": "0",
-        "invoices": "0",
-        "portal": "0",
-        "public_show": "0",
-        "public_edit": "0"
-      },
-      "data_count": 0,
-      "input_type": "string",
-      "enum": null
-    }
-  ]
+| HTTP Status Code | Error Description | Exception Class |
+|  --- | --- | --- |
+| 404 | Not Found | `ApiException` |
+
+
+# Read Metadata
+
+This request will list all of the metadata belonging to a particular resource (ie. subscription, customer) that is specified.
+
+## Metadata Data
+
+This endpoint will also display the current stats of your metadata to use as a tool for pagination.
+
+```java
+PaginatedMetadata readMetadata(
+    final ReadMetadataInput input)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `resourceType` | [`ResourceType`](../../doc/models/resource-type.md) | Template, Required | the resource type to which the metafields belong |
+| `resourceId` | `String` | Template, Required | The Chargify id of the customer or the subscription for which the metadata applies |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
+
+## Response Type
+
+[`PaginatedMetadata`](../../doc/models/paginated-metadata.md)
+
+## Example Usage
+
+```java
+ReadMetadataInput readMetadataInput = new ReadMetadataInput.Builder(
+    ResourceType.SUBSCRIPTIONS,
+    "resource_id4"
+)
+.page(2)
+.perPage(50)
+.build();
+
+try {
+    PaginatedMetadata result = customFieldsController.readMetadata(readMetadataInput);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
 }
 ```
 
@@ -242,50 +262,6 @@ try {
     e.printStackTrace();
 }
 ```
-
-
-# Delete Metafield
-
-Use the following method to delete a metafield. This will remove the metafield from the Site.
-
-Additionally, this will remove the metafield and associated metadata with all Subscriptions on the Site.
-
-```java
-Void deleteMetafield(
-    final ResourceType resourceType,
-    final String name)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `resourceType` | [`ResourceType`](../../doc/models/resource-type.md) | Template, Required | the resource type to which the metafields belong |
-| `name` | `String` | Query, Optional | The name of the metafield to be deleted |
-
-## Response Type
-
-`void`
-
-## Example Usage
-
-```java
-ResourceType resourceType = ResourceType.SUBSCRIPTIONS;
-
-try {
-    customFieldsController.deleteMetafield(resourceType, null);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Errors
-
-| HTTP Status Code | Error Description | Exception Class |
-|  --- | --- | --- |
-| 404 | Not Found | `ApiException` |
 
 
 # Create Metadata
@@ -355,54 +331,6 @@ CreateMetadataRequest body = new CreateMetadataRequest.Builder(
 
 try {
     List<Metadata> result = customFieldsController.createMetadata(resourceType, resourceId, null, body);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-
-# Read Metadata
-
-This request will list all of the metadata belonging to a particular resource (ie. subscription, customer) that is specified.
-
-## Metadata Data
-
-This endpoint will also display the current stats of your metadata to use as a tool for pagination.
-
-```java
-PaginatedMetadata readMetadata(
-    final ReadMetadataInput input)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `resourceType` | [`ResourceType`](../../doc/models/resource-type.md) | Template, Required | the resource type to which the metafields belong |
-| `resourceId` | `String` | Template, Required | The Chargify id of the customer or the subscription for which the metadata applies |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
-
-## Response Type
-
-[`PaginatedMetadata`](../../doc/models/paginated-metadata.md)
-
-## Example Usage
-
-```java
-ReadMetadataInput readMetadataInput = new ReadMetadataInput.Builder(
-    ResourceType.SUBSCRIPTIONS,
-    "resource_id4"
-)
-.page(2)
-.perPage(50)
-.build();
-
-try {
-    PaginatedMetadata result = customFieldsController.readMetadata(readMetadataInput);
     System.out.println(result);
 } catch (ApiException e) {
     e.printStackTrace();
@@ -547,15 +475,15 @@ PaginatedMetadata listMetadata(
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
 | `resourceType` | [`ResourceType`](../../doc/models/resource-type.md) | Template, Required | the resource type to which the metafields belong |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
 | `dateField` | [`BasicDateField`](../../doc/models/basic-date-field.md) | Query, Optional | The type of filter you would like to apply to your search. |
 | `startDate` | `String` | Query, Optional | The start date (format YYYY-MM-DD) with which to filter the date_field. Returns metadata with a timestamp at or after midnight (12:00:00 AM) in your site’s time zone on the date specified. |
 | `endDate` | `String` | Query, Optional | The end date (format YYYY-MM-DD) with which to filter the date_field. Returns metadata with a timestamp up to and including 11:59:59PM in your site’s time zone on the date specified. |
 | `startDatetime` | `String` | Query, Optional | The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns metadata with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of start_date. |
 | `endDatetime` | `String` | Query, Optional | The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns metadata with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. |
 | `withDeleted` | `Boolean` | Query, Optional | Allow to fetch deleted metadata. |
-| `resourceIds` | `List<Integer>` | Query, Optional | Allow to fetch metadata for multiple records based on provided ids. Use in query: `resource_ids[]=122&resource_ids[]=123&resource_ids[]=124`.<br>**Constraints**: *Maximum Items*: `50` |
+| `resourceIds` | `List<Integer>` | Query, Optional | Allow to fetch metadata for multiple records based on provided ids. Use in query: `resource_ids[]=122&resource_ids[]=123&resource_ids[]=124`. |
 | `direction` | [`ListMetadataInputDirection`](../../doc/models/containers/list-metadata-input-direction.md) | Query, Optional | This is a container for one-of cases. |
 
 ## Response Type
@@ -580,6 +508,78 @@ try {
     e.printStackTrace();
 } catch (IOException e) {
     e.printStackTrace();
+}
+```
+
+
+# List Metafields
+
+This endpoint lists metafields associated with a site. The metafield description and usage is contained in the response.
+
+```java
+ListMetafieldsResponse listMetafields(
+    final ListMetafieldsInput input)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `resourceType` | [`ResourceType`](../../doc/models/resource-type.md) | Template, Required | the resource type to which the metafields belong |
+| `name` | `String` | Query, Optional | filter by the name of the metafield |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
+| `direction` | [`ListMetafieldsInputDirection`](../../doc/models/containers/list-metafields-input-direction.md) | Query, Optional | This is a container for one-of cases. |
+
+## Response Type
+
+[`ListMetafieldsResponse`](../../doc/models/list-metafields-response.md)
+
+## Example Usage
+
+```java
+ListMetafieldsInput listMetafieldsInput = new ListMetafieldsInput.Builder(
+    ResourceType.SUBSCRIPTIONS
+)
+.page(2)
+.perPage(50)
+.build();
+
+try {
+    ListMetafieldsResponse result = customFieldsController.listMetafields(listMetafieldsInput);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "total_count": 0,
+  "current_page": 0,
+  "total_pages": 0,
+  "per_page": 0,
+  "metafields": [
+    {
+      "id": 0,
+      "name": "string",
+      "scope": {
+        "csv": "0",
+        "statements": "0",
+        "invoices": "0",
+        "portal": "0",
+        "public_show": "0",
+        "public_edit": "0"
+      },
+      "data_count": 0,
+      "input_type": "string",
+      "enum": null
+    }
+  ]
 }
 ```
 

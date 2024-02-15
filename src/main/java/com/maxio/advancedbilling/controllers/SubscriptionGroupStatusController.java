@@ -35,93 +35,6 @@ public final class SubscriptionGroupStatusController extends BaseController {
     }
 
     /**
-     * This endpoint will immediately cancel all subscriptions within the specified group. The group
-     * is identified by it's `uid` passed in the URL. To successfully cancel the group, the primary
-     * subscription must be on automatic billing. The group members as well must be on automatic
-     * billing or they must be prepaid. In order to cancel a subscription group while also charging
-     * for any unbilled usage on metered or prepaid components, the `charge_unbilled_usage=true`
-     * parameter must be included in the request.
-     * @param  uid  Required parameter: The uid of the subscription group
-     * @param  body  Optional parameter: Example:
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void cancelSubscriptionsInGroup(
-            final String uid,
-            final CancelGroupedSubscriptionsRequest body) throws ApiException, IOException {
-        prepareCancelSubscriptionsInGroupRequest(uid, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for cancelSubscriptionsInGroup.
-     */
-    private ApiCall<Void, ApiException> prepareCancelSubscriptionsInGroupRequest(
-            final String uid,
-            final CancelGroupedSubscriptionsRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscription_groups/{uid}/cancel.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("uid").value(uid)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This endpoint will schedule all subscriptions within the specified group to be canceled at
-     * the end of their billing period. The group is identified by it's uid passed in the URL. All
-     * subscriptions in the group must be on automatic billing in order to successfully cancel them,
-     * and the group must not be in a "past_due" state.
-     * @param  uid  Required parameter: The uid of the subscription group
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public void initiateDelayedCancellationForGroup(
-            final String uid) throws ApiException, IOException {
-        prepareInitiateDelayedCancellationForGroupRequest(uid).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for initiateDelayedCancellationForGroup.
-     */
-    private ApiCall<Void, ApiException> prepareInitiateDelayedCancellationForGroupRequest(
-            final String uid) throws IOException {
-        return new ApiCall.Builder<Void, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscription_groups/{uid}/delayed_cancel.json")
-                        .templateParam(param -> param.key("uid").value(uid)
-                                .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .nullify404(false)
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
      * Removing the delayed cancellation on a subscription group will ensure that the subscriptions
      * do not get canceled at the end of the period. The request will reset the
      * `cancel_at_end_of_period` flag to false on each member in the group.
@@ -146,7 +59,8 @@ public final class SubscriptionGroupStatusController extends BaseController {
                         .path("/subscription_groups/{uid}/delayed_cancel.json")
                         .templateParam(param -> param.key("uid").value(uid)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)
@@ -214,11 +128,101 @@ public final class SubscriptionGroupStatusController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, ReactivateSubscriptionGroupResponse.class))
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This endpoint will schedule all subscriptions within the specified group to be canceled at
+     * the end of their billing period. The group is identified by it's uid passed in the URL. All
+     * subscriptions in the group must be on automatic billing in order to successfully cancel them,
+     * and the group must not be in a "past_due" state.
+     * @param  uid  Required parameter: The uid of the subscription group
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public void initiateDelayedCancellationForGroup(
+            final String uid) throws ApiException, IOException {
+        prepareInitiateDelayedCancellationForGroupRequest(uid).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for initiateDelayedCancellationForGroup.
+     */
+    private ApiCall<Void, ApiException> prepareInitiateDelayedCancellationForGroupRequest(
+            final String uid) throws IOException {
+        return new ApiCall.Builder<Void, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscription_groups/{uid}/delayed_cancel.json")
+                        .templateParam(param -> param.key("uid").value(uid)
+                                .shouldEncode(true))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This endpoint will immediately cancel all subscriptions within the specified group. The group
+     * is identified by it's `uid` passed in the URL. To successfully cancel the group, the primary
+     * subscription must be on automatic billing. The group members as well must be on automatic
+     * billing or they must be prepaid. In order to cancel a subscription group while also charging
+     * for any unbilled usage on metered or prepaid components, the `charge_unbilled_usage=true`
+     * parameter must be included in the request.
+     * @param  uid  Required parameter: The uid of the subscription group
+     * @param  body  Optional parameter: Example:
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public void cancelSubscriptionsInGroup(
+            final String uid,
+            final CancelGroupedSubscriptionsRequest body) throws ApiException, IOException {
+        prepareCancelSubscriptionsInGroupRequest(uid, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for cancelSubscriptionsInGroup.
+     */
+    private ApiCall<Void, ApiException> prepareCancelSubscriptionsInGroupRequest(
+            final String uid,
+            final CancelGroupedSubscriptionsRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<Void, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscription_groups/{uid}/cancel.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("uid").value(uid)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .nullify404(false)
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new ErrorListResponseException(reason, context)))

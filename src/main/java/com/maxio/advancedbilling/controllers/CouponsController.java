@@ -45,64 +45,6 @@ public final class CouponsController extends BaseController {
     }
 
     /**
-     * ## Coupons Documentation Coupons can be administered in the Chargify application or created
-     * via API. Please view our section on [creating
-     * coupons](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404742830733) for more
-     * information. Additionally, for documentation on how to apply a coupon to a subscription
-     * within the Chargify UI, please see our documentation
-     * [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404761012877). ## Create Coupon
-     * This request will create a coupon, based on the provided information. When creating a coupon,
-     * you must specify a product family using the `product_family_id`. If no `product_family_id` is
-     * passed, the first product family available is used. You will also need to formulate your URL
-     * to cite the Product Family ID in your request. You can restrict a coupon to only apply to
-     * specific products / components by optionally passing in hashes of `restricted_products`
-     * and/or `restricted_components` in the format: `{ "&lt;product/component_id&gt;": boolean_value }`.
-     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
-     *         the coupon belongs
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the CouponResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public CouponResponse createCoupon(
-            final int productFamilyId,
-            final CreateCouponBody body) throws ApiException, IOException {
-        return prepareCreateCouponRequest(productFamilyId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for createCoupon.
-     */
-    private ApiCall<CouponResponse, ApiException> prepareCreateCouponRequest(
-            final int productFamilyId,
-            final CreateCouponBody body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<CouponResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/product_families/{product_family_id}/coupons.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serializeTypeCombinator(body))
-                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, CouponResponse.class))
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
      * List coupons for a specific Product Family in a Site. If the coupon is set to
      * `use_site_exchange_rate: true`, it will return pricing based on the current exchange rate. If
      * the flag is set to false, it will return all of the defined prices for each currency.
@@ -151,7 +93,8 @@ public final class CouponsController extends BaseController {
                         .templateParam(param -> param.key("product_family_id").value(input.getProductFamilyId()).isRequired(false)
                                 .shouldEncode(true))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -198,7 +141,8 @@ public final class CouponsController extends BaseController {
                         .queryParam(param -> param.key("code")
                                 .value(code).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -210,44 +154,140 @@ public final class CouponsController extends BaseController {
     }
 
     /**
-     * You can retrieve the Coupon via the API with the Show method. You must identify the Coupon in
-     * this call by the ID parameter that Chargify assigns. If instead you would like to find a
-     * Coupon using a Coupon code, see the Coupon Find method. When fetching a coupon, if you have
-     * defined multiple currencies at the site level, you can optionally pass the
-     * `?currency_prices=true` query param to include an array of currency price data in the
-     * response. If the coupon is set to `use_site_exchange_rate: true`, it will return pricing
-     * based on the current exchange rate. If the flag is set to false, it will return all of the
-     * defined prices for each currency.
-     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
-     *         the coupon belongs
+     * This request allows you to request the subcodes that are attached to a coupon.
+     * @param  input  ListCouponSubcodesInput object containing request parameters
+     * @return    Returns the CouponSubcodes response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public CouponSubcodes listCouponSubcodes(
+            final ListCouponSubcodesInput input) throws ApiException, IOException {
+        return prepareListCouponSubcodesRequest(input).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listCouponSubcodes.
+     */
+    private ApiCall<CouponSubcodes, ApiException> prepareListCouponSubcodesRequest(
+            final ListCouponSubcodesInput input) throws IOException {
+        return new ApiCall.Builder<CouponSubcodes, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/coupons/{coupon_id}/codes.json")
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .templateParam(param -> param.key("coupon_id").value(input.getCouponId()).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, CouponSubcodes.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * You can update the subcodes for the given Coupon via the API with a PUT request to the
+     * resource endpoint. Send an array of new coupon subcodes. **Note**: All current subcodes for
+     * that Coupon will be deleted first, and replaced with the list of subcodes sent to this
+     * endpoint. The response will contain: + The created subcodes, + Subcodes that were not created
+     * because they already exist, + Any subcodes not created because they are invalid.
      * @param  couponId  Required parameter: The Chargify id of the coupon
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the CouponSubcodesResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public CouponSubcodesResponse updateCouponSubcodes(
+            final int couponId,
+            final CouponSubcodes body) throws ApiException, IOException {
+        return prepareUpdateCouponSubcodesRequest(couponId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for updateCouponSubcodes.
+     */
+    private ApiCall<CouponSubcodesResponse, ApiException> prepareUpdateCouponSubcodesRequest(
+            final int couponId,
+            final CouponSubcodes body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<CouponSubcodesResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/coupons/{coupon_id}/codes.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.PUT))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, CouponSubcodesResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * You can verify if a specific coupon code is valid using the `validate` method. This method is
+     * useful for validating coupon codes that are entered by a customer. If the coupon is found and
+     * is valid, the coupon will be returned with a 200 status code. If the coupon is invalid, the
+     * status code will be 404 and the response will say why it is invalid. If the coupon is valid,
+     * the status code will be 200 and the coupon will be returned. The following reasons for
+     * invalidity are supported: + Coupon not found + Coupon is invalid + Coupon expired If you have
+     * more than one product family and if the coupon you are validating does not belong to the
+     * first product family in your site, then you will need to specify the product family, either
+     * in the url or as a query string param. This can be done by supplying the id or the handle in
+     * the `handle:my-family` format. Eg. ```
+     * https://&lt;subdomain&gt;.chargify.com/product_families/handle:&lt;product_family_handle&gt;/coupons/validate.&lt;format&gt;?code=&lt;coupon_code&gt;
+     * ``` Or: ```
+     * https://&lt;subdomain&gt;.chargify.com/coupons/validate.&lt;format&gt;?code=&lt;coupon_code&gt;&amp;product_family_id=&lt;id&gt;
+     * ```.
+     * @param  code  Required parameter: The code of the coupon
+     * @param  productFamilyId  Optional parameter: The Chargify id of the product family to which
+     *         the coupon belongs
      * @return    Returns the CouponResponse response from the API call
      * @throws    ApiException    Represents error response from the server.
      * @throws    IOException    Signals that an I/O exception of some sort has occurred.
      */
-    public CouponResponse readCoupon(
-            final int productFamilyId,
-            final int couponId) throws ApiException, IOException {
-        return prepareReadCouponRequest(productFamilyId, couponId).execute();
+    public CouponResponse validateCoupon(
+            final String code,
+            final Integer productFamilyId) throws ApiException, IOException {
+        return prepareValidateCouponRequest(code, productFamilyId).execute();
     }
 
     /**
-     * Builds the ApiCall object for readCoupon.
+     * Builds the ApiCall object for validateCoupon.
      */
-    private ApiCall<CouponResponse, ApiException> prepareReadCouponRequest(
-            final int productFamilyId,
-            final int couponId) throws IOException {
+    private ApiCall<CouponResponse, ApiException> prepareValidateCouponRequest(
+            final String code,
+            final Integer productFamilyId) throws IOException {
         return new ApiCall.Builder<CouponResponse, ApiException>()
                 .globalConfig(getGlobalConfiguration())
                 .requestBuilder(requestBuilder -> requestBuilder
                         .server(Server.ENUM_DEFAULT.value())
-                        .path("/product_families/{product_family_id}/coupons/{coupon_id}.json")
-                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
-                                .shouldEncode(true))
+                        .path("/coupons/validate.json")
+                        .queryParam(param -> param.key("code")
+                                .value(code))
+                        .queryParam(param -> param.key("product_family_id")
+                                .value(productFamilyId).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -299,52 +339,9 @@ public final class CouponsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, CouponResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * You can archive a Coupon via the API with the archive method. Archiving makes that Coupon
-     * unavailable for future use, but allows it to remain attached and functional on existing
-     * Subscriptions that are using it. The `archived_at` date and time will be assigned.
-     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
-     *         the coupon belongs
-     * @param  couponId  Required parameter: The Chargify id of the coupon
-     * @return    Returns the CouponResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public CouponResponse archiveCoupon(
-            final int productFamilyId,
-            final int couponId) throws ApiException, IOException {
-        return prepareArchiveCouponRequest(productFamilyId, couponId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for archiveCoupon.
-     */
-    private ApiCall<CouponResponse, ApiException> prepareArchiveCouponRequest(
-            final int productFamilyId,
-            final int couponId) throws IOException {
-        return new ApiCall.Builder<CouponResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/product_families/{product_family_id}/coupons/{coupon_id}.json")
-                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, CouponResponse.class))
@@ -411,111 +408,13 @@ public final class CouponsController extends BaseController {
                         .queryParam(param -> param.key("filter[use_site_exchange_rate]")
                                 .value(input.getFilterUseSiteExchangeRate()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserializeArray(response,
                                         CouponResponse[].class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This request will provide details about the coupon usage as an array of data hashes, one per
-     * product.
-     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
-     *         the coupon belongs
-     * @param  couponId  Required parameter: The Chargify id of the coupon
-     * @return    Returns the List of CouponUsage response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public List<CouponUsage> readCouponUsage(
-            final int productFamilyId,
-            final int couponId) throws ApiException, IOException {
-        return prepareReadCouponUsageRequest(productFamilyId, couponId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for readCouponUsage.
-     */
-    private ApiCall<List<CouponUsage>, ApiException> prepareReadCouponUsageRequest(
-            final int productFamilyId,
-            final int couponId) throws IOException {
-        return new ApiCall.Builder<List<CouponUsage>, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/product_families/{product_family_id}/coupons/{coupon_id}/usage.json")
-                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
-                                .shouldEncode(true))
-                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserializeArray(response,
-                                        CouponUsage[].class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * You can verify if a specific coupon code is valid using the `validate` method. This method is
-     * useful for validating coupon codes that are entered by a customer. If the coupon is found and
-     * is valid, the coupon will be returned with a 200 status code. If the coupon is invalid, the
-     * status code will be 404 and the response will say why it is invalid. If the coupon is valid,
-     * the status code will be 200 and the coupon will be returned. The following reasons for
-     * invalidity are supported: + Coupon not found + Coupon is invalid + Coupon expired If you have
-     * more than one product family and if the coupon you are validating does not belong to the
-     * first product family in your site, then you will need to specify the product family, either
-     * in the url or as a query string param. This can be done by supplying the id or the handle in
-     * the `handle:my-family` format. Eg. ```
-     * https://&lt;subdomain&gt;.chargify.com/product_families/handle:&lt;product_family_handle&gt;/coupons/validate.&lt;format&gt;?code=&lt;coupon_code&gt;
-     * ``` Or: ```
-     * https://&lt;subdomain&gt;.chargify.com/coupons/validate.&lt;format&gt;?code=&lt;coupon_code&gt;&amp;product_family_id=&lt;id&gt;
-     * ```.
-     * @param  code  Required parameter: The code of the coupon
-     * @param  productFamilyId  Optional parameter: The Chargify id of the product family to which
-     *         the coupon belongs
-     * @return    Returns the CouponResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public CouponResponse validateCoupon(
-            final String code,
-            final Integer productFamilyId) throws ApiException, IOException {
-        return prepareValidateCouponRequest(code, productFamilyId).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for validateCoupon.
-     */
-    private ApiCall<CouponResponse, ApiException> prepareValidateCouponRequest(
-            final String code,
-            final Integer productFamilyId) throws IOException {
-        return new ApiCall.Builder<CouponResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/coupons/validate.json")
-                        .queryParam(param -> param.key("code")
-                                .value(code))
-                        .queryParam(param -> param.key("product_family_id")
-                                .value(productFamilyId).isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, CouponResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -559,7 +458,8 @@ public final class CouponsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -619,95 +519,9 @@ public final class CouponsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, CouponSubcodesResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This request allows you to request the subcodes that are attached to a coupon.
-     * @param  input  ListCouponSubcodesInput object containing request parameters
-     * @return    Returns the CouponSubcodes response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public CouponSubcodes listCouponSubcodes(
-            final ListCouponSubcodesInput input) throws ApiException, IOException {
-        return prepareListCouponSubcodesRequest(input).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for listCouponSubcodes.
-     */
-    private ApiCall<CouponSubcodes, ApiException> prepareListCouponSubcodesRequest(
-            final ListCouponSubcodesInput input) throws IOException {
-        return new ApiCall.Builder<CouponSubcodes, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/coupons/{coupon_id}/codes.json")
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .templateParam(param -> param.key("coupon_id").value(input.getCouponId()).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, CouponSubcodes.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * You can update the subcodes for the given Coupon via the API with a PUT request to the
-     * resource endpoint. Send an array of new coupon subcodes. **Note**: All current subcodes for
-     * that Coupon will be deleted first, and replaced with the list of subcodes sent to this
-     * endpoint. The response will contain: + The created subcodes, + Subcodes that were not created
-     * because they already exist, + Any subcodes not created because they are invalid.
-     * @param  couponId  Required parameter: The Chargify id of the coupon
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the CouponSubcodesResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public CouponSubcodesResponse updateCouponSubcodes(
-            final int couponId,
-            final CouponSubcodes body) throws ApiException, IOException {
-        return prepareUpdateCouponSubcodesRequest(couponId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for updateCouponSubcodes.
-     */
-    private ApiCall<CouponSubcodesResponse, ApiException> prepareUpdateCouponSubcodesRequest(
-            final int couponId,
-            final CouponSubcodes body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<CouponSubcodesResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/coupons/{coupon_id}/codes.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, CouponSubcodesResponse.class))
@@ -753,13 +567,213 @@ public final class CouponsController extends BaseController {
                                 .shouldEncode(true))
                         .templateParam(param -> param.key("subcode").value(subcode)
                                 .shouldEncode(true))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.DELETE))
                 .responseHandler(responseHandler -> responseHandler
                         .nullify404(false)
                         .localErrorCase("404",
                                  ErrorCase.setReason("Not Found",
                                 (reason, context) -> new ApiException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * ## Coupons Documentation Coupons can be administered in the Chargify application or created
+     * via API. Please view our section on [creating
+     * coupons](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404742830733) for more
+     * information. Additionally, for documentation on how to apply a coupon to a subscription
+     * within the Chargify UI, please see our documentation
+     * [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404761012877). ## Create Coupon
+     * This request will create a coupon, based on the provided information. When creating a coupon,
+     * you must specify a product family using the `product_family_id`. If no `product_family_id` is
+     * passed, the first product family available is used. You will also need to formulate your URL
+     * to cite the Product Family ID in your request. You can restrict a coupon to only apply to
+     * specific products / components by optionally passing in hashes of `restricted_products`
+     * and/or `restricted_components` in the format: `{ "&lt;product/component_id&gt;": boolean_value }`.
+     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
+     *         the coupon belongs
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the CouponResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public CouponResponse createCoupon(
+            final int productFamilyId,
+            final CreateCouponBody body) throws ApiException, IOException {
+        return prepareCreateCouponRequest(productFamilyId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for createCoupon.
+     */
+    private ApiCall<CouponResponse, ApiException> prepareCreateCouponRequest(
+            final int productFamilyId,
+            final CreateCouponBody body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<CouponResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/product_families/{product_family_id}/coupons.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serializeTypeCombinator(body))
+                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, CouponResponse.class))
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * You can retrieve the Coupon via the API with the Show method. You must identify the Coupon in
+     * this call by the ID parameter that Chargify assigns. If instead you would like to find a
+     * Coupon using a Coupon code, see the Coupon Find method. When fetching a coupon, if you have
+     * defined multiple currencies at the site level, you can optionally pass the
+     * `?currency_prices=true` query param to include an array of currency price data in the
+     * response. If the coupon is set to `use_site_exchange_rate: true`, it will return pricing
+     * based on the current exchange rate. If the flag is set to false, it will return all of the
+     * defined prices for each currency.
+     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
+     *         the coupon belongs
+     * @param  couponId  Required parameter: The Chargify id of the coupon
+     * @return    Returns the CouponResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public CouponResponse readCoupon(
+            final int productFamilyId,
+            final int couponId) throws ApiException, IOException {
+        return prepareReadCouponRequest(productFamilyId, couponId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for readCoupon.
+     */
+    private ApiCall<CouponResponse, ApiException> prepareReadCouponRequest(
+            final int productFamilyId,
+            final int couponId) throws IOException {
+        return new ApiCall.Builder<CouponResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/product_families/{product_family_id}/coupons/{coupon_id}.json")
+                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, CouponResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * You can archive a Coupon via the API with the archive method. Archiving makes that Coupon
+     * unavailable for future use, but allows it to remain attached and functional on existing
+     * Subscriptions that are using it. The `archived_at` date and time will be assigned.
+     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
+     *         the coupon belongs
+     * @param  couponId  Required parameter: The Chargify id of the coupon
+     * @return    Returns the CouponResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public CouponResponse archiveCoupon(
+            final int productFamilyId,
+            final int couponId) throws ApiException, IOException {
+        return prepareArchiveCouponRequest(productFamilyId, couponId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for archiveCoupon.
+     */
+    private ApiCall<CouponResponse, ApiException> prepareArchiveCouponRequest(
+            final int productFamilyId,
+            final int couponId) throws IOException {
+        return new ApiCall.Builder<CouponResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/product_families/{product_family_id}/coupons/{coupon_id}.json")
+                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.DELETE))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, CouponResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This request will provide details about the coupon usage as an array of data hashes, one per
+     * product.
+     * @param  productFamilyId  Required parameter: The Chargify id of the product family to which
+     *         the coupon belongs
+     * @param  couponId  Required parameter: The Chargify id of the coupon
+     * @return    Returns the List of CouponUsage response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public List<CouponUsage> readCouponUsage(
+            final int productFamilyId,
+            final int couponId) throws ApiException, IOException {
+        return prepareReadCouponUsageRequest(productFamilyId, couponId).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for readCouponUsage.
+     */
+    private ApiCall<List<CouponUsage>, ApiException> prepareReadCouponUsageRequest(
+            final int productFamilyId,
+            final int couponId) throws IOException {
+        return new ApiCall.Builder<List<CouponUsage>, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/product_families/{product_family_id}/coupons/{coupon_id}/usage.json")
+                        .templateParam(param -> param.key("product_family_id").value(productFamilyId).isRequired(false)
+                                .shouldEncode(true))
+                        .templateParam(param -> param.key("coupon_id").value(couponId).isRequired(false)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserializeArray(response,
+                                        CouponUsage[].class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

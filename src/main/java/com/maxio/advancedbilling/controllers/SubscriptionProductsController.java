@@ -36,6 +36,57 @@ public final class SubscriptionProductsController extends BaseController {
     }
 
     /**
+     * ## Previewing a future date It is also possible to preview the migration for a date in the
+     * future, as long as it's still within the subscription's current billing period, by passing a
+     * `proration_date` along with the request (eg: `"proration_date": "2020-12-18T18:25:43.511Z"`).
+     * This will calculate the prorated adjustment, charge, payment and credit applied values
+     * assuming the migration is done at that date in the future as opposed to right now.
+     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the SubscriptionMigrationPreviewResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public SubscriptionMigrationPreviewResponse previewSubscriptionProductMigration(
+            final String subscriptionId,
+            final SubscriptionMigrationPreviewRequest body) throws ApiException, IOException {
+        return preparePreviewSubscriptionProductMigrationRequest(subscriptionId, body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for previewSubscriptionProductMigration.
+     */
+    private ApiCall<SubscriptionMigrationPreviewResponse, ApiException> preparePreviewSubscriptionProductMigrationRequest(
+            final String subscriptionId,
+            final SubscriptionMigrationPreviewRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<SubscriptionMigrationPreviewResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/subscriptions/{subscription_id}/migrations/preview.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, SubscriptionMigrationPreviewResponse.class))
+                        .localErrorCase("422",
+                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
+                                (reason, context) -> new ErrorListResponseException(reason, context)))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
      * In order to create a migration, you must pass the `product_id` or `product_handle` in the
      * object when you send a POST request. You may also pass either a `product_price_point_id` or
      * `product_price_point_handle` to choose which price point the subscription is moved to. If no
@@ -119,61 +170,12 @@ public final class SubscriptionProductsController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, SubscriptionResponse.class))
-                        .localErrorCase("422",
-                                 ErrorCase.setReason("Unprocessable Entity (WebDAV)",
-                                (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * ## Previewing a future date It is also possible to preview the migration for a date in the
-     * future, as long as it's still within the subscription's current billing period, by passing a
-     * `proration_date` along with the request (eg: `"proration_date": "2020-12-18T18:25:43.511Z"`).
-     * This will calculate the prorated adjustment, charge, payment and credit applied values
-     * assuming the migration is done at that date in the future as opposed to right now.
-     * @param  subscriptionId  Required parameter: The Chargify id of the subscription
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the SubscriptionMigrationPreviewResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public SubscriptionMigrationPreviewResponse previewSubscriptionProductMigration(
-            final String subscriptionId,
-            final SubscriptionMigrationPreviewRequest body) throws ApiException, IOException {
-        return preparePreviewSubscriptionProductMigrationRequest(subscriptionId, body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for previewSubscriptionProductMigration.
-     */
-    private ApiCall<SubscriptionMigrationPreviewResponse, ApiException> preparePreviewSubscriptionProductMigrationRequest(
-            final String subscriptionId,
-            final SubscriptionMigrationPreviewRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<SubscriptionMigrationPreviewResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/subscriptions/{subscription_id}/migrations/preview.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .templateParam(param -> param.key("subscription_id").value(subscriptionId)
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, SubscriptionMigrationPreviewResponse.class))
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new ErrorListResponseException(reason, context)))

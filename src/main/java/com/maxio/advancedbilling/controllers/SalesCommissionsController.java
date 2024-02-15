@@ -35,62 +35,6 @@ public final class SalesCommissionsController extends BaseController {
     }
 
     /**
-     * Endpoint returns subscriptions with associated sales reps ## Modified Authentication Process
-     * The Sales Commission API differs from other Chargify API endpoints. This resource is
-     * associated with the seller itself. Up to now all available resources were at the level of the
-     * site, therefore creating the API Key per site was a sufficient solution. To share resources
-     * at the seller level, a new authentication method was introduced, which is user
-     * authentication. Creating an API Key for a user is a required step to correctly use the Sales
-     * Commission API, more details
-     * [here](https://developers.chargify.com/docs/developer-docs/ZG9jOjMyNzk5NTg0-2020-04-20-new-api-authentication).
-     * Access to the Sales Commission API endpoints is available to users with financial access,
-     * where the seller has the Advanced Analytics component enabled. For further information on
-     * getting access to Advanced Analytics please contact Chargify support. &gt; Note: The request is
-     * at seller level, it means `&lt;&lt;subdomain&gt;&gt;` variable will be replaced by `app`.
-     * @param  input  ListSalesCommissionSettingsInput object containing request parameters
-     * @return    Returns the List of SaleRepSettings response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public List<SaleRepSettings> listSalesCommissionSettings(
-            final ListSalesCommissionSettingsInput input) throws ApiException, IOException {
-        return prepareListSalesCommissionSettingsRequest(input).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for listSalesCommissionSettings.
-     */
-    private ApiCall<List<SaleRepSettings>, ApiException> prepareListSalesCommissionSettingsRequest(
-            final ListSalesCommissionSettingsInput input) throws IOException {
-        return new ApiCall.Builder<List<SaleRepSettings>, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/sellers/{seller_id}/sales_commission_settings.json")
-                        .queryParam(param -> param.key("live_mode")
-                                .value(input.getLiveMode()).isRequired(false))
-                        .queryParam(param -> param.key("page")
-                                .value(input.getPage()).isRequired(false))
-                        .queryParam(param -> param.key("per_page")
-                                .value(input.getPerPage()).isRequired(false))
-                        .templateParam(param -> param.key("seller_id").value(input.getSellerId())
-                                .shouldEncode(true))
-                        .headerParam(param -> param.key("Authorization")
-                                .value(input.getAuthorization()).isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserializeArray(response,
-                                        SaleRepSettings[].class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
      * Endpoint returns sales rep list with details ## Modified Authentication Process The Sales
      * Commission API differs from other Chargify API endpoints. This resource is associated with
      * the seller itself. Up to now all available resources were at the level of the site, therefore
@@ -133,7 +77,8 @@ public final class SalesCommissionsController extends BaseController {
                         .headerParam(param -> param.key("Authorization")
                                 .value(input.getAuthorization()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -215,11 +160,69 @@ public final class SalesCommissionsController extends BaseController {
                         .headerParam(param -> param.key("Authorization")
                                 .value((authorization != null) ? authorization : "Bearer <<apiKey>>").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, SaleRep.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * Endpoint returns subscriptions with associated sales reps ## Modified Authentication Process
+     * The Sales Commission API differs from other Chargify API endpoints. This resource is
+     * associated with the seller itself. Up to now all available resources were at the level of the
+     * site, therefore creating the API Key per site was a sufficient solution. To share resources
+     * at the seller level, a new authentication method was introduced, which is user
+     * authentication. Creating an API Key for a user is a required step to correctly use the Sales
+     * Commission API, more details
+     * [here](https://developers.chargify.com/docs/developer-docs/ZG9jOjMyNzk5NTg0-2020-04-20-new-api-authentication).
+     * Access to the Sales Commission API endpoints is available to users with financial access,
+     * where the seller has the Advanced Analytics component enabled. For further information on
+     * getting access to Advanced Analytics please contact Chargify support. &gt; Note: The request is
+     * at seller level, it means `&lt;&lt;subdomain&gt;&gt;` variable will be replaced by `app`.
+     * @param  input  ListSalesCommissionSettingsInput object containing request parameters
+     * @return    Returns the List of SaleRepSettings response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public List<SaleRepSettings> listSalesCommissionSettings(
+            final ListSalesCommissionSettingsInput input) throws ApiException, IOException {
+        return prepareListSalesCommissionSettingsRequest(input).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listSalesCommissionSettings.
+     */
+    private ApiCall<List<SaleRepSettings>, ApiException> prepareListSalesCommissionSettingsRequest(
+            final ListSalesCommissionSettingsInput input) throws IOException {
+        return new ApiCall.Builder<List<SaleRepSettings>, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/sellers/{seller_id}/sales_commission_settings.json")
+                        .queryParam(param -> param.key("live_mode")
+                                .value(input.getLiveMode()).isRequired(false))
+                        .queryParam(param -> param.key("page")
+                                .value(input.getPage()).isRequired(false))
+                        .queryParam(param -> param.key("per_page")
+                                .value(input.getPerPage()).isRequired(false))
+                        .templateParam(param -> param.key("seller_id").value(input.getSellerId())
+                                .shouldEncode(true))
+                        .headerParam(param -> param.key("Authorization")
+                                .value(input.getAuthorization()).isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserializeArray(response,
+                                        SaleRepSettings[].class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))

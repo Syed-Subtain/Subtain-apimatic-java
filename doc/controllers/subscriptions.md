@@ -11,17 +11,17 @@ SubscriptionsController subscriptionsController = client.getSubscriptionsControl
 ## Methods
 
 * [Create Subscription](../../doc/controllers/subscriptions.md#create-subscription)
+* [Override Subscription](../../doc/controllers/subscriptions.md#override-subscription)
+* [Activate Subscription](../../doc/controllers/subscriptions.md#activate-subscription)
+* [Purge Subscription](../../doc/controllers/subscriptions.md#purge-subscription)
+* [Read Subscription](../../doc/controllers/subscriptions.md#read-subscription)
+* [Preview Subscription](../../doc/controllers/subscriptions.md#preview-subscription)
+* [Delete Coupon From Subscription](../../doc/controllers/subscriptions.md#delete-coupon-from-subscription)
 * [List Subscriptions](../../doc/controllers/subscriptions.md#list-subscriptions)
 * [Update Subscription](../../doc/controllers/subscriptions.md#update-subscription)
-* [Read Subscription](../../doc/controllers/subscriptions.md#read-subscription)
-* [Override Subscription](../../doc/controllers/subscriptions.md#override-subscription)
 * [Read Subscription by Reference](../../doc/controllers/subscriptions.md#read-subscription-by-reference)
-* [Purge Subscription](../../doc/controllers/subscriptions.md#purge-subscription)
 * [Create Prepaid Subscription](../../doc/controllers/subscriptions.md#create-prepaid-subscription)
-* [Preview Subscription](../../doc/controllers/subscriptions.md#preview-subscription)
 * [Apply Coupon to Subscription](../../doc/controllers/subscriptions.md#apply-coupon-to-subscription)
-* [Delete Coupon From Subscription](../../doc/controllers/subscriptions.md#delete-coupon-from-subscription)
-* [Activate Subscription](../../doc/controllers/subscriptions.md#activate-subscription)
 
 
 # Create Subscription
@@ -677,10 +677,10 @@ CreateSubscriptionRequest body = new CreateSubscriptionRequest.Builder(
             .lastName("Smith")
             .fullNumber("4111111111111111")
             .cardType(CardType.VISA)
-            .expirationMonth(PaymentProfileAttributesExpirationMonth.fromMString(
+            .expirationMonth(PaymentProfileAttributesExpirationMonth.fromString(
                 "1"
             ))
-            .expirationYear(PaymentProfileAttributesExpirationYear.fromMString(
+            .expirationYear(PaymentProfileAttributesExpirationYear.fromString(
                 "2021"
             ))
             .billingAddress("123 Mass Ave.")
@@ -850,6 +850,626 @@ try {
 | 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
 
 
+# Override Subscription
+
+This API endpoint allows you to set certain subscription fields that are usually managed for you automatically. Some of the fields can be set via the normal Subscriptions Update API, but others can only be set using this endpoint.
+
+This endpoint is provided for cases where you need to “align” Chargify data with data that happened in your system, perhaps before you started using Chargify. For example, you may choose to import your historical subscription data, and would like the activation and cancellation dates in Chargify to match your existing historical dates. Chargify does not backfill historical events (i.e. from the Events API), but some static data can be changed via this API.
+
+Why are some fields only settable from this endpoint, and not the normal subscription create and update endpoints? Because we want users of this endpoint to be aware that these fields are usually managed by Chargify, and using this API means **you are stepping out on your own.**
+
+Changing these fields will not affect any other attributes. For example, adding an expiration date will not affect the next assessment date on the subscription.
+
+If you regularly need to override the current_period_starts_at for new subscriptions, this can also be accomplished by setting both `previous_billing_at` and `next_billing_at` at subscription creation. See the documentation on [Importing Subscriptions](./b3A6MTQxMDgzODg-create-subscription#subscriptions-import) for more information.
+
+## Limitations
+
+When passing `current_period_starts_at` some validations are made:
+
+1. The subscription needs to be unbilled (no statements or invoices).
+2. The value passed must be a valid date/time. We recommend using the iso 8601 format.
+3. The value passed must be before the current date/time.
+
+If unpermitted parameters are sent, a 400 HTTP response is sent along with a string giving the reason for the problem.
+
+```java
+Void overrideSubscription(
+    final String subscriptionId,
+    final OverrideSubscriptionRequest body)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+| `body` | [`OverrideSubscriptionRequest`](../../doc/models/override-subscription-request.md) | Body, Optional | Only these fields are available to be set. |
+
+## Response Type
+
+`void`
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+OverrideSubscriptionRequest body = new OverrideSubscriptionRequest.Builder(
+    new OverrideSubscription.Builder()
+        .activatedAt("1999-12-01")
+        .canceledAt("2000-12-31")
+        .cancellationMessage("Original cancellation in 2000")
+        .expiresAt("2001-07-15")
+        .build()
+)
+.build();
+
+try {
+    subscriptionsController.overrideSubscription(subscriptionId, body);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Errors
+
+| HTTP Status Code | Error Description | Exception Class |
+|  --- | --- | --- |
+| 400 | Bad Request | `ApiException` |
+| 422 | Unprocessable Entity (WebDAV) | `ApiException` |
+
+
+# Activate Subscription
+
+Chargify offers the ability to activate awaiting signup and trialing subscriptions. This feature is only available on the Relationship Invoicing architecture. Subscriptions in a group may not be activated immediately.
+
+For details on how the activation works, and how to activate subscriptions through the application, see [activation](#).
+
+The `revert_on_failure` parameter controls the behavior upon activation failure.
+
+- If set to `true` and something goes wrong i.e. payment fails, then Chargify will not change the subscription's state. The subscription’s billing period will also remain the same.
+- If set to `false` and something goes wrong i.e. payment fails, then Chargify will continue through with the activation and enter an end of life state. For trialing subscriptions, that will either be trial ended (if the trial is no obligation), past due (if the trial has an obligation), or canceled (if the site has no dunning strategy, or has a strategy that says to cancel immediately). For awaiting signup subscriptions, that will always be canceled.
+
+The default activation failure behavior can be configured per activation attempt, or you may set a default value under Config > Settings > Subscription Activation Settings.
+
+## Activation Scenarios
+
+### Activate Awaiting Signup subscription
+
+- Given you have a product without trial
+- Given you have a site without dunning strategy
+
+```mermaid
+  flowchart LR
+    AS[Awaiting Signup] --> A{Activate}
+    A -->|Success| Active
+    A -->|Failure| ROF{revert_on_failure}
+    ROF -->|true| AS
+    ROF -->|false| Canceled
+```
+
+- Given you have a product with trial
+- Given you have a site with dunning strategy
+
+```mermaid
+  flowchart LR
+    AS[Awaiting Signup] --> A{Activate}
+    A -->|Success| Trialing
+    A -->|Failure| ROF{revert_on_failure}
+    ROF -->|true| AS
+    ROF -->|false| PD[Past Due]
+```
+
+### Activate Trialing subscription
+
+You can read more about the behavior of trialing subscriptions [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404494617357#trialing-subscriptions-0-0).
+When the `revert_on_failure` parameter is set to `true`, the subscription's state will remain as Trialing, we will void the invoice from activation and return any prepayments and credits applied to the invoice back to the subscription.
+
+```java
+SubscriptionResponse activateSubscription(
+    final String subscriptionId,
+    final ActivateSubscriptionRequest body)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+| `body` | [`ActivateSubscriptionRequest`](../../doc/models/activate-subscription-request.md) | Body, Optional | - |
+
+## Response Type
+
+[`SubscriptionResponse`](../../doc/models/subscription-response.md)
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+try {
+    SubscriptionResponse result = subscriptionsController.activateSubscription(subscriptionId, null);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Errors
+
+| HTTP Status Code | Error Description | Exception Class |
+|  --- | --- | --- |
+| 400 | Bad Request | [`NestedErrorResponseException`](../../doc/models/nested-error-response-exception.md) |
+
+
+# Purge Subscription
+
+For sites in test mode, you may purge individual subscriptions.
+
+Provide the subscription ID in the url.  To confirm, supply the customer ID in the query string `ack` parameter. You may also delete the customer record and/or payment profiles by passing `cascade` parameters. For example, to delete just the customer record, the query params would be: `?ack={customer_id}&cascade[]=customer`
+
+If you need to remove subscriptions from a live site, please contact support to discuss your use case.
+
+### Delete customer and payment profile
+
+The query params will be: `?ack={customer_id}&cascade[]=customer&cascade[]=payment_profile`
+
+```java
+Void purgeSubscription(
+    final String subscriptionId,
+    final int ack,
+    final List<SubscriptionPurgeType> cascade)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+| `ack` | `int` | Query, Required | id of the customer. |
+| `cascade` | [`List<SubscriptionPurgeType>`](../../doc/models/subscription-purge-type.md) | Query, Optional | Options are "customer" or "payment_profile".<br>Use in query: `cascade[]=customer&cascade[]=payment_profile`. |
+
+## Response Type
+
+`void`
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+int ack = 252;
+Liquid error: Value cannot be null. (Parameter 'key')try {
+    subscriptionsController.purgeSubscription(subscriptionId, ack, Liquid error: Value cannot be null. (Parameter 'key'));
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Errors
+
+| HTTP Status Code | Error Description | Exception Class |
+|  --- | --- | --- |
+| 400 | Bad Request | `ApiException` |
+
+
+# Read Subscription
+
+Use this endpoint to find subscription details.
+
+## Self-Service Page token
+
+Self-Service Page token for the subscription is not returned by default. If this information is desired, the include[]=self_service_page_token parameter must be provided with the request.
+
+```java
+SubscriptionResponse readSubscription(
+    final String subscriptionId,
+    final List<SubscriptionInclude> include)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+| `include` | [`List<SubscriptionInclude>`](../../doc/models/subscription-include.md) | Query, Optional | Allows including additional data in the response. Use in query: `include[]=coupons&include[]=self_service_page_token`. |
+
+## Response Type
+
+[`SubscriptionResponse`](../../doc/models/subscription-response.md)
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+Liquid error: Value cannot be null. (Parameter 'key')try {
+    SubscriptionResponse result = subscriptionsController.readSubscription(subscriptionId, Liquid error: Value cannot be null. (Parameter 'key'));
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "subscription": {
+    "id": 15236915,
+    "state": "active",
+    "balance_in_cents": 0,
+    "total_revenue_in_cents": 14000,
+    "product_price_in_cents": 1000,
+    "product_version_number": 7,
+    "current_period_ends_at": "2016-11-15T14:48:10-05:00",
+    "next_assessment_at": "2016-11-15T14:48:10-05:00",
+    "trial_started_at": null,
+    "trial_ended_at": null,
+    "activated_at": "2016-11-14T14:48:12-05:00",
+    "expires_at": null,
+    "created_at": "2016-11-14T14:48:10-05:00",
+    "updated_at": "2016-11-14T15:24:41-05:00",
+    "cancellation_message": null,
+    "cancellation_method": null,
+    "cancel_at_end_of_period": null,
+    "canceled_at": null,
+    "current_period_started_at": "2016-11-14T14:48:10-05:00",
+    "previous_state": "active",
+    "signup_payment_id": 162269766,
+    "signup_revenue": "260.00",
+    "delayed_cancel_at": null,
+    "coupon_code": "5SNN6HFK3GBH",
+    "payment_collection_method": "automatic",
+    "snap_day": null,
+    "reason_code": null,
+    "receives_invoice_emails": false,
+    "net_terms": 0,
+    "customer": {
+      "first_name": "Curtis",
+      "last_name": "Test",
+      "email": "curtis@example.com",
+      "cc_emails": "jeff@example.com",
+      "organization": "",
+      "reference": null,
+      "id": 14714298,
+      "created_at": "2016-11-14T14:48:10-05:00",
+      "updated_at": "2016-11-14T14:48:13-05:00",
+      "address": "123 Anywhere Street",
+      "address_2": "",
+      "city": "Boulder",
+      "state": "CO",
+      "zip": "80302",
+      "country": "US",
+      "phone": "",
+      "verified": false,
+      "portal_customer_created_at": "2016-11-14T14:48:13-05:00",
+      "portal_invite_last_sent_at": "2016-11-14T14:48:13-05:00",
+      "portal_invite_last_accepted_at": null,
+      "tax_exempt": false,
+      "vat_number": "012345678"
+    },
+    "product": {
+      "id": 3792003,
+      "name": "$10 Basic Plan",
+      "handle": "basic",
+      "description": "lorem ipsum",
+      "accounting_code": "basic",
+      "price_in_cents": 1000,
+      "interval": 1,
+      "interval_unit": "day",
+      "initial_charge_in_cents": null,
+      "expiration_interval": null,
+      "expiration_interval_unit": "never",
+      "trial_price_in_cents": null,
+      "trial_interval": null,
+      "trial_interval_unit": "month",
+      "initial_charge_after_trial": false,
+      "return_params": "",
+      "request_credit_card": false,
+      "require_credit_card": false,
+      "created_at": "2016-03-24T13:38:39-04:00",
+      "updated_at": "2016-11-03T13:03:05-04:00",
+      "archived_at": null,
+      "update_return_url": "",
+      "update_return_params": "",
+      "product_family": {
+        "id": 527890,
+        "name": "Acme Projects",
+        "handle": "billing-plans",
+        "accounting_code": null,
+        "description": ""
+      },
+      "public_signup_pages": [
+        {
+          "id": 281054,
+          "url": "https://general-goods.chargify.com/subscribe/kqvmfrbgd89q/basic"
+        },
+        {
+          "id": 281240,
+          "url": "https://general-goods.chargify.com/subscribe/dkffht5dxfd8/basic"
+        },
+        {
+          "id": 282694,
+          "url": "https://general-goods.chargify.com/subscribe/jwffwgdd95s8/basic"
+        }
+      ],
+      "taxable": false,
+      "version_number": 7,
+      "product_price_point_name": "Default"
+    },
+    "credit_card": {
+      "id": 10191713,
+      "payment_type": "credit_card",
+      "first_name": "Curtis",
+      "last_name": "Test",
+      "masked_card_number": "XXXX-XXXX-XXXX-1",
+      "card_type": "bogus",
+      "expiration_month": 1,
+      "expiration_year": 2026,
+      "billing_address": "123 Anywhere Street",
+      "billing_address_2": "",
+      "billing_city": "Boulder",
+      "billing_state": null,
+      "billing_country": "",
+      "billing_zip": "80302",
+      "current_vault": "bogus",
+      "vault_token": "1",
+      "customer_vault_token": null,
+      "customer_id": 14714298
+    },
+    "payment_type": "credit_card",
+    "referral_code": "w7kjc9",
+    "next_product_id": null,
+    "coupon_use_count": 1,
+    "coupon_uses_allowed": 1,
+    "stored_credential_transaction_id": 166411599220288,
+    "on_hold_at": null,
+    "scheduled_cancellation_at": "2016-11-14T14:48:13-05:00"
+  }
+}
+```
+
+
+# Preview Subscription
+
+The Chargify API allows you to preview a subscription by POSTing the same JSON or XML as for a subscription creation.
+
+The "Next Billing" amount and "Next Billing" date are represented in each Subscriber's Summary. For more information, please see our documentation [here](https://chargify.zendesk.com/hc/en-us/articles/4407884887835#next-billing).
+
+## Side effects
+
+A subscription will not be created by sending a POST to this endpoint. It is meant to serve as a prediction.
+
+## Taxable Subscriptions
+
+This endpoint will preview taxes applicable to a purchase. In order for taxes to be previewed, the following conditions must be met:
+
++ Taxes must be configured on the subscription
++ The preview must be for the purchase of a taxable product or component, or combination of the two.
++ The subscription payload must contain a full billing or shipping address in order to calculate tax
+
+For more information about creating taxable previews, please see our documentation guide on how to create [taxable subscriptions.](https://chargify.zendesk.com/hc/en-us/articles/4407904217755#creating-taxable-subscriptions)
+
+You do **not** need to include a card number to generate tax information when you are previewing a subscription. However, please note that when you actually want to create the subscription, you must include the credit card information if you want the billing address to be stored in Chargify. The billing address and the credit card information are stored together within the payment profile object. Also, you may not send a billing address to Chargify without payment profile information, as the address is stored on the card.
+
+You can pass shipping and billing addresses and still decide not to calculate taxes. To do that, pass `skip_billing_manifest_taxes: true` attribute.
+
+## Non-taxable Subscriptions
+
+If you'd like to calculate subscriptions that do not include tax, please feel free to leave off the billing information.
+
+```java
+SubscriptionPreviewResponse previewSubscription(
+    final CreateSubscriptionRequest body)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `body` | [`CreateSubscriptionRequest`](../../doc/models/create-subscription-request.md) | Body, Optional | - |
+
+## Response Type
+
+[`SubscriptionPreviewResponse`](../../doc/models/subscription-preview-response.md)
+
+## Example Usage
+
+```java
+CreateSubscriptionRequest body = new CreateSubscriptionRequest.Builder(
+    new CreateSubscription.Builder()
+        .productHandle("gold-product")
+        .build()
+)
+.build();
+
+try {
+    SubscriptionPreviewResponse result = subscriptionsController.previewSubscription(body);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response *(as JSON)*
+
+```json
+{
+  "subscription_preview": {
+    "current_billing_manifest": {
+      "line_items": [
+        {
+          "transaction_type": "charge",
+          "kind": "baseline",
+          "amount_in_cents": 5000,
+          "memo": "Gold Product (08/21/2018 - 09/21/2018)",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0,
+          "product_id": 1,
+          "product_handle": "gold-product",
+          "product_name": "Gold Product",
+          "period_range_start": "13 Oct 2023",
+          "period_range_end": "13 Nov 2023"
+        },
+        {
+          "transaction_type": "charge",
+          "kind": "component",
+          "amount_in_cents": 28000,
+          "memo": "Component name: 14 Unit names",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0,
+          "component_id": 462149,
+          "component_handle": "handle",
+          "component_name": "Component name"
+        },
+        {
+          "transaction_type": "charge",
+          "kind": "component",
+          "amount_in_cents": 2000,
+          "memo": "Fractional Metered Components: 20.0 Fractional Metereds",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0,
+          "component_id": 426665,
+          "component_handle": "handle",
+          "component_name": "Fractional Metered Components"
+        },
+        {
+          "transaction_type": "charge",
+          "kind": "component",
+          "amount_in_cents": 0,
+          "memo": "On/Off Component",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0,
+          "component_id": 426670,
+          "component_handle": "handle",
+          "component_name": "On/Off Component"
+        },
+        {
+          "transaction_type": "adjustment",
+          "kind": "coupon",
+          "amount_in_cents": 0,
+          "memo": "Coupon: 1DOLLAR - You only get $1.00 off",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0
+        }
+      ],
+      "total_in_cents": 35000,
+      "total_discount_in_cents": 0,
+      "total_tax_in_cents": 0,
+      "subtotal_in_cents": 35000,
+      "start_date": "2018-08-21T21:25:21Z",
+      "end_date": "2018-09-21T21:25:21Z",
+      "period_type": "recurring",
+      "existing_balance_in_cents": 0
+    },
+    "next_billing_manifest": {
+      "line_items": [
+        {
+          "transaction_type": "charge",
+          "kind": "baseline",
+          "amount_in_cents": 5000,
+          "memo": "Gold Product (09/21/2018 - 10/21/2018)",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0,
+          "product_id": 1,
+          "product_handle": "gold-product",
+          "product_name": "Gold Product"
+        },
+        {
+          "transaction_type": "charge",
+          "kind": "component",
+          "amount_in_cents": 28000,
+          "memo": "Component name: 14 Unit names",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0,
+          "component_id": 462149,
+          "component_handle": "handle",
+          "component_name": "Component name"
+        },
+        {
+          "transaction_type": "charge",
+          "kind": "component",
+          "amount_in_cents": 0,
+          "memo": "On/Off Component",
+          "discount_amount_in_cents": 0,
+          "taxable_amount_in_cents": 0,
+          "component_id": 426670,
+          "component_handle": "handle",
+          "component_name": "On/Off Component"
+        }
+      ],
+      "total_in_cents": 33000,
+      "total_discount_in_cents": 0,
+      "total_tax_in_cents": 0,
+      "subtotal_in_cents": 33000,
+      "start_date": "2018-09-21T21:25:21Z",
+      "end_date": "2018-10-21T21:25:21Z",
+      "period_type": "recurring",
+      "existing_balance_in_cents": 0
+    }
+  }
+}
+```
+
+
+# Delete Coupon From Subscription
+
+Use this endpoint to remove a coupon from an existing subscription.
+
+For more information on the expected behaviour of removing a coupon from a subscription, please see our documentation [here.](https://chargify.zendesk.com/hc/en-us/articles/4407896488987#removing-a-coupon)
+
+```java
+String deleteCouponFromSubscription(
+    final String subscriptionId,
+    final String couponCode)
+```
+
+## Parameters
+
+| Parameter | Type | Tags | Description |
+|  --- | --- | --- | --- |
+| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
+| `couponCode` | `String` | Query, Optional | The coupon code |
+
+## Response Type
+
+`String`
+
+## Example Usage
+
+```java
+String subscriptionId = "subscription_id0";
+
+try {
+    String result = subscriptionsController.deleteCouponFromSubscription(subscriptionId, null);
+    System.out.println(result);
+} catch (ApiException e) {
+    e.printStackTrace();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+## Example Response
+
+```
+"Coupon successfully removed"
+```
+
+## Errors
+
+| HTTP Status Code | Error Description | Exception Class |
+|  --- | --- | --- |
+| 422 | Unprocessable Entity (WebDAV) | [`SubscriptionRemoveCouponErrorsException`](../../doc/models/subscription-remove-coupon-errors-exception.md) |
+
+
 # List Subscriptions
 
 This method will return an array of subscriptions from a Site. Pay close attention to query string filters and pagination in order to control responses from the server.
@@ -871,8 +1491,8 @@ List<SubscriptionResponse> listSubscriptions(
 
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
 | `state` | [`SubscriptionState`](../../doc/models/subscription-state.md) | Query, Optional | The current state of the subscription |
 | `product` | `Integer` | Query, Optional | The product id of the subscription. (Note that the product handle cannot be used.) |
 | `productPricePointId` | `Integer` | Query, Optional | The ID of the product price point. If supplied, product is required |
@@ -884,7 +1504,7 @@ List<SubscriptionResponse> listSubscriptions(
 | `endDatetime` | `LocalDateTime` | Query, Optional | The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns subscriptions with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. Use in query `end_datetime=2022-08-01 10:00:05`. |
 | `metadata` | `Map<String, String>` | Query, Optional | The value of the metadata field specified in the parameter. Use in query `metadata[my-field]=value&metadata[other-field]=another_value`. |
 | `direction` | [`ListSubscriptionsInputDirection`](../../doc/models/containers/list-subscriptions-input-direction.md) | Query, Optional | This is a container for one-of cases. |
-| `sort` | [`SubscriptionSort`](../../doc/models/subscription-sort.md) | Query, Optional | The attribute by which to sort<br>**Default**: `SubscriptionSort.SIGNUP_DATE` |
+| `sort` | [`SubscriptionSort`](../../doc/models/subscription-sort.md) | Query, Optional | The attribute by which to sort |
 
 ## Response Type
 
@@ -1118,255 +1738,6 @@ try {
 | 422 | Unprocessable Entity (WebDAV) | [`ErrorListResponseException`](../../doc/models/error-list-response-exception.md) |
 
 
-# Read Subscription
-
-Use this endpoint to find subscription details.
-
-## Self-Service Page token
-
-Self-Service Page token for the subscription is not returned by default. If this information is desired, the include[]=self_service_page_token parameter must be provided with the request.
-
-```java
-SubscriptionResponse readSubscription(
-    final String subscriptionId,
-    final List<SubscriptionInclude> include)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `include` | [`List<SubscriptionInclude>`](../../doc/models/subscription-include.md) | Query, Optional | Allows including additional data in the response. Use in query: `include[]=coupons&include[]=self_service_page_token`. |
-
-## Response Type
-
-[`SubscriptionResponse`](../../doc/models/subscription-response.md)
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-Liquid error: Value cannot be null. (Parameter 'key')try {
-    SubscriptionResponse result = subscriptionsController.readSubscription(subscriptionId, Liquid error: Value cannot be null. (Parameter 'key'));
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "subscription": {
-    "id": 15236915,
-    "state": "active",
-    "balance_in_cents": 0,
-    "total_revenue_in_cents": 14000,
-    "product_price_in_cents": 1000,
-    "product_version_number": 7,
-    "current_period_ends_at": "2016-11-15T14:48:10-05:00",
-    "next_assessment_at": "2016-11-15T14:48:10-05:00",
-    "trial_started_at": null,
-    "trial_ended_at": null,
-    "activated_at": "2016-11-14T14:48:12-05:00",
-    "expires_at": null,
-    "created_at": "2016-11-14T14:48:10-05:00",
-    "updated_at": "2016-11-14T15:24:41-05:00",
-    "cancellation_message": null,
-    "cancellation_method": null,
-    "cancel_at_end_of_period": null,
-    "canceled_at": null,
-    "current_period_started_at": "2016-11-14T14:48:10-05:00",
-    "previous_state": "active",
-    "signup_payment_id": 162269766,
-    "signup_revenue": "260.00",
-    "delayed_cancel_at": null,
-    "coupon_code": "5SNN6HFK3GBH",
-    "payment_collection_method": "automatic",
-    "snap_day": null,
-    "reason_code": null,
-    "receives_invoice_emails": false,
-    "net_terms": 0,
-    "customer": {
-      "first_name": "Curtis",
-      "last_name": "Test",
-      "email": "curtis@example.com",
-      "cc_emails": "jeff@example.com",
-      "organization": "",
-      "reference": null,
-      "id": 14714298,
-      "created_at": "2016-11-14T14:48:10-05:00",
-      "updated_at": "2016-11-14T14:48:13-05:00",
-      "address": "123 Anywhere Street",
-      "address_2": "",
-      "city": "Boulder",
-      "state": "CO",
-      "zip": "80302",
-      "country": "US",
-      "phone": "",
-      "verified": false,
-      "portal_customer_created_at": "2016-11-14T14:48:13-05:00",
-      "portal_invite_last_sent_at": "2016-11-14T14:48:13-05:00",
-      "portal_invite_last_accepted_at": null,
-      "tax_exempt": false,
-      "vat_number": "012345678"
-    },
-    "product": {
-      "id": 3792003,
-      "name": "$10 Basic Plan",
-      "handle": "basic",
-      "description": "lorem ipsum",
-      "accounting_code": "basic",
-      "price_in_cents": 1000,
-      "interval": 1,
-      "interval_unit": "day",
-      "initial_charge_in_cents": null,
-      "expiration_interval": null,
-      "expiration_interval_unit": "never",
-      "trial_price_in_cents": null,
-      "trial_interval": null,
-      "trial_interval_unit": "month",
-      "initial_charge_after_trial": false,
-      "return_params": "",
-      "request_credit_card": false,
-      "require_credit_card": false,
-      "created_at": "2016-03-24T13:38:39-04:00",
-      "updated_at": "2016-11-03T13:03:05-04:00",
-      "archived_at": null,
-      "update_return_url": "",
-      "update_return_params": "",
-      "product_family": {
-        "id": 527890,
-        "name": "Acme Projects",
-        "handle": "billing-plans",
-        "accounting_code": null,
-        "description": ""
-      },
-      "public_signup_pages": [
-        {
-          "id": 281054,
-          "url": "https://general-goods.chargify.com/subscribe/kqvmfrbgd89q/basic"
-        },
-        {
-          "id": 281240,
-          "url": "https://general-goods.chargify.com/subscribe/dkffht5dxfd8/basic"
-        },
-        {
-          "id": 282694,
-          "url": "https://general-goods.chargify.com/subscribe/jwffwgdd95s8/basic"
-        }
-      ],
-      "taxable": false,
-      "version_number": 7,
-      "product_price_point_name": "Default"
-    },
-    "credit_card": {
-      "id": 10191713,
-      "payment_type": "credit_card",
-      "first_name": "Curtis",
-      "last_name": "Test",
-      "masked_card_number": "XXXX-XXXX-XXXX-1",
-      "card_type": "bogus",
-      "expiration_month": 1,
-      "expiration_year": 2026,
-      "billing_address": "123 Anywhere Street",
-      "billing_address_2": "",
-      "billing_city": "Boulder",
-      "billing_state": null,
-      "billing_country": "",
-      "billing_zip": "80302",
-      "current_vault": "bogus",
-      "vault_token": "1",
-      "customer_vault_token": null,
-      "customer_id": 14714298
-    },
-    "payment_type": "credit_card",
-    "referral_code": "w7kjc9",
-    "next_product_id": null,
-    "coupon_use_count": 1,
-    "coupon_uses_allowed": 1,
-    "stored_credential_transaction_id": 166411599220288,
-    "on_hold_at": null,
-    "scheduled_cancellation_at": "2016-11-14T14:48:13-05:00"
-  }
-}
-```
-
-
-# Override Subscription
-
-This API endpoint allows you to set certain subscription fields that are usually managed for you automatically. Some of the fields can be set via the normal Subscriptions Update API, but others can only be set using this endpoint.
-
-This endpoint is provided for cases where you need to “align” Chargify data with data that happened in your system, perhaps before you started using Chargify. For example, you may choose to import your historical subscription data, and would like the activation and cancellation dates in Chargify to match your existing historical dates. Chargify does not backfill historical events (i.e. from the Events API), but some static data can be changed via this API.
-
-Why are some fields only settable from this endpoint, and not the normal subscription create and update endpoints? Because we want users of this endpoint to be aware that these fields are usually managed by Chargify, and using this API means **you are stepping out on your own.**
-
-Changing these fields will not affect any other attributes. For example, adding an expiration date will not affect the next assessment date on the subscription.
-
-If you regularly need to override the current_period_starts_at for new subscriptions, this can also be accomplished by setting both `previous_billing_at` and `next_billing_at` at subscription creation. See the documentation on [Importing Subscriptions](./b3A6MTQxMDgzODg-create-subscription#subscriptions-import) for more information.
-
-## Limitations
-
-When passing `current_period_starts_at` some validations are made:
-
-1. The subscription needs to be unbilled (no statements or invoices).
-2. The value passed must be a valid date/time. We recommend using the iso 8601 format.
-3. The value passed must be before the current date/time.
-
-If unpermitted parameters are sent, a 400 HTTP response is sent along with a string giving the reason for the problem.
-
-```java
-Void overrideSubscription(
-    final String subscriptionId,
-    final OverrideSubscriptionRequest body)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `body` | [`OverrideSubscriptionRequest`](../../doc/models/override-subscription-request.md) | Body, Optional | Only these fields are available to be set. |
-
-## Response Type
-
-`void`
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-OverrideSubscriptionRequest body = new OverrideSubscriptionRequest.Builder(
-    new OverrideSubscription.Builder()
-        .activatedAt("1999-12-01")
-        .canceledAt("2000-12-31")
-        .cancellationMessage("Original cancellation in 2000")
-        .expiresAt("2001-07-15")
-        .build()
-)
-.build();
-
-try {
-    subscriptionsController.overrideSubscription(subscriptionId, body);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Errors
-
-| HTTP Status Code | Error Description | Exception Class |
-|  --- | --- | --- |
-| 400 | Bad Request | `ApiException` |
-| 422 | Unprocessable Entity (WebDAV) | `ApiException` |
-
-
 # Read Subscription by Reference
 
 Use this endpoint to find a subscription by its reference.
@@ -1398,58 +1769,6 @@ try {
     e.printStackTrace();
 }
 ```
-
-
-# Purge Subscription
-
-For sites in test mode, you may purge individual subscriptions.
-
-Provide the subscription ID in the url.  To confirm, supply the customer ID in the query string `ack` parameter. You may also delete the customer record and/or payment profiles by passing `cascade` parameters. For example, to delete just the customer record, the query params would be: `?ack={customer_id}&cascade[]=customer`
-
-If you need to remove subscriptions from a live site, please contact support to discuss your use case.
-
-### Delete customer and payment profile
-
-The query params will be: `?ack={customer_id}&cascade[]=customer&cascade[]=payment_profile`
-
-```java
-Void purgeSubscription(
-    final String subscriptionId,
-    final int ack,
-    final List<SubscriptionPurgeType> cascade)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `ack` | `int` | Query, Required | id of the customer. |
-| `cascade` | [`List<SubscriptionPurgeType>`](../../doc/models/subscription-purge-type.md) | Query, Optional | Options are "customer" or "payment_profile".<br>Use in query: `cascade[]=customer&cascade[]=payment_profile`. |
-
-## Response Type
-
-`void`
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-int ack = 252;
-Liquid error: Value cannot be null. (Parameter 'key')try {
-    subscriptionsController.purgeSubscription(subscriptionId, ack, Liquid error: Value cannot be null. (Parameter 'key'));
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Errors
-
-| HTTP Status Code | Error Description | Exception Class |
-|  --- | --- | --- |
-| 400 | Bad Request | `ApiException` |
 
 
 # Create Prepaid Subscription
@@ -1507,190 +1826,6 @@ try {
     "auto_replenish": true,
     "replenish_to_amount_in_cents": 50000,
     "replenish_threshold_amount_in_cents": 10000
-  }
-}
-```
-
-
-# Preview Subscription
-
-The Chargify API allows you to preview a subscription by POSTing the same JSON or XML as for a subscription creation.
-
-The "Next Billing" amount and "Next Billing" date are represented in each Subscriber's Summary. For more information, please see our documentation [here](https://chargify.zendesk.com/hc/en-us/articles/4407884887835#next-billing).
-
-## Side effects
-
-A subscription will not be created by sending a POST to this endpoint. It is meant to serve as a prediction.
-
-## Taxable Subscriptions
-
-This endpoint will preview taxes applicable to a purchase. In order for taxes to be previewed, the following conditions must be met:
-
-+ Taxes must be configured on the subscription
-+ The preview must be for the purchase of a taxable product or component, or combination of the two.
-+ The subscription payload must contain a full billing or shipping address in order to calculate tax
-
-For more information about creating taxable previews, please see our documentation guide on how to create [taxable subscriptions.](https://chargify.zendesk.com/hc/en-us/articles/4407904217755#creating-taxable-subscriptions)
-
-You do **not** need to include a card number to generate tax information when you are previewing a subscription. However, please note that when you actually want to create the subscription, you must include the credit card information if you want the billing address to be stored in Chargify. The billing address and the credit card information are stored together within the payment profile object. Also, you may not send a billing address to Chargify without payment profile information, as the address is stored on the card.
-
-You can pass shipping and billing addresses and still decide not to calculate taxes. To do that, pass `skip_billing_manifest_taxes: true` attribute.
-
-## Non-taxable Subscriptions
-
-If you'd like to calculate subscriptions that do not include tax, please feel free to leave off the billing information.
-
-```java
-SubscriptionPreviewResponse previewSubscription(
-    final CreateSubscriptionRequest body)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `body` | [`CreateSubscriptionRequest`](../../doc/models/create-subscription-request.md) | Body, Optional | - |
-
-## Response Type
-
-[`SubscriptionPreviewResponse`](../../doc/models/subscription-preview-response.md)
-
-## Example Usage
-
-```java
-CreateSubscriptionRequest body = new CreateSubscriptionRequest.Builder(
-    new CreateSubscription.Builder()
-        .productHandle("gold-product")
-        .build()
-)
-.build();
-
-try {
-    SubscriptionPreviewResponse result = subscriptionsController.previewSubscription(body);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "subscription_preview": {
-    "current_billing_manifest": {
-      "line_items": [
-        {
-          "transaction_type": "charge",
-          "kind": "baseline",
-          "amount_in_cents": 5000,
-          "memo": "Gold Product (08/21/2018 - 09/21/2018)",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0,
-          "product_id": 1,
-          "product_handle": "gold-product",
-          "product_name": "Gold Product",
-          "period_range_start": "13 Oct 2023",
-          "period_range_end": "13 Nov 2023"
-        },
-        {
-          "transaction_type": "charge",
-          "kind": "component",
-          "amount_in_cents": 28000,
-          "memo": "Component name: 14 Unit names",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0,
-          "component_id": 462149,
-          "component_handle": "handle",
-          "component_name": "Component name"
-        },
-        {
-          "transaction_type": "charge",
-          "kind": "component",
-          "amount_in_cents": 2000,
-          "memo": "Fractional Metered Components: 20.0 Fractional Metereds",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0,
-          "component_id": 426665,
-          "component_handle": "handle",
-          "component_name": "Fractional Metered Components"
-        },
-        {
-          "transaction_type": "charge",
-          "kind": "component",
-          "amount_in_cents": 0,
-          "memo": "On/Off Component",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0,
-          "component_id": 426670,
-          "component_handle": "handle",
-          "component_name": "On/Off Component"
-        },
-        {
-          "transaction_type": "adjustment",
-          "kind": "coupon",
-          "amount_in_cents": 0,
-          "memo": "Coupon: 1DOLLAR - You only get $1.00 off",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0
-        }
-      ],
-      "total_in_cents": 35000,
-      "total_discount_in_cents": 0,
-      "total_tax_in_cents": 0,
-      "subtotal_in_cents": 35000,
-      "start_date": "2018-08-21T21:25:21Z",
-      "end_date": "2018-09-21T21:25:21Z",
-      "period_type": "recurring",
-      "existing_balance_in_cents": 0
-    },
-    "next_billing_manifest": {
-      "line_items": [
-        {
-          "transaction_type": "charge",
-          "kind": "baseline",
-          "amount_in_cents": 5000,
-          "memo": "Gold Product (09/21/2018 - 10/21/2018)",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0,
-          "product_id": 1,
-          "product_handle": "gold-product",
-          "product_name": "Gold Product"
-        },
-        {
-          "transaction_type": "charge",
-          "kind": "component",
-          "amount_in_cents": 28000,
-          "memo": "Component name: 14 Unit names",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0,
-          "component_id": 462149,
-          "component_handle": "handle",
-          "component_name": "Component name"
-        },
-        {
-          "transaction_type": "charge",
-          "kind": "component",
-          "amount_in_cents": 0,
-          "memo": "On/Off Component",
-          "discount_amount_in_cents": 0,
-          "taxable_amount_in_cents": 0,
-          "component_id": 426670,
-          "component_handle": "handle",
-          "component_name": "On/Off Component"
-        }
-      ],
-      "total_in_cents": 33000,
-      "total_discount_in_cents": 0,
-      "total_tax_in_cents": 0,
-      "subtotal_in_cents": 33000,
-      "start_date": "2018-09-21T21:25:21Z",
-      "end_date": "2018-10-21T21:25:21Z",
-      "period_type": "recurring",
-      "existing_balance_in_cents": 0
-    }
   }
 }
 ```
@@ -1901,139 +2036,4 @@ try {
 | HTTP Status Code | Error Description | Exception Class |
 |  --- | --- | --- |
 | 422 | Unprocessable Entity (WebDAV) | [`SubscriptionAddCouponErrorException`](../../doc/models/subscription-add-coupon-error-exception.md) |
-
-
-# Delete Coupon From Subscription
-
-Use this endpoint to remove a coupon from an existing subscription.
-
-For more information on the expected behaviour of removing a coupon from a subscription, please see our documentation [here.](https://chargify.zendesk.com/hc/en-us/articles/4407896488987#removing-a-coupon)
-
-```java
-String deleteCouponFromSubscription(
-    final String subscriptionId,
-    final String couponCode)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `couponCode` | `String` | Query, Optional | The coupon code |
-
-## Response Type
-
-`String`
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-
-try {
-    String result = subscriptionsController.deleteCouponFromSubscription(subscriptionId, null);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Example Response
-
-```
-"Coupon successfully removed"
-```
-
-## Errors
-
-| HTTP Status Code | Error Description | Exception Class |
-|  --- | --- | --- |
-| 422 | Unprocessable Entity (WebDAV) | [`SubscriptionRemoveCouponErrorsException`](../../doc/models/subscription-remove-coupon-errors-exception.md) |
-
-
-# Activate Subscription
-
-Chargify offers the ability to activate awaiting signup and trialing subscriptions. This feature is only available on the Relationship Invoicing architecture. Subscriptions in a group may not be activated immediately.
-
-For details on how the activation works, and how to activate subscriptions through the application, see [activation](#).
-
-The `revert_on_failure` parameter controls the behavior upon activation failure.
-
-- If set to `true` and something goes wrong i.e. payment fails, then Chargify will not change the subscription's state. The subscription’s billing period will also remain the same.
-- If set to `false` and something goes wrong i.e. payment fails, then Chargify will continue through with the activation and enter an end of life state. For trialing subscriptions, that will either be trial ended (if the trial is no obligation), past due (if the trial has an obligation), or canceled (if the site has no dunning strategy, or has a strategy that says to cancel immediately). For awaiting signup subscriptions, that will always be canceled.
-
-The default activation failure behavior can be configured per activation attempt, or you may set a default value under Config > Settings > Subscription Activation Settings.
-
-## Activation Scenarios
-
-### Activate Awaiting Signup subscription
-
-- Given you have a product without trial
-- Given you have a site without dunning strategy
-
-```mermaid
-  flowchart LR
-    AS[Awaiting Signup] --> A{Activate}
-    A -->|Success| Active
-    A -->|Failure| ROF{revert_on_failure}
-    ROF -->|true| AS
-    ROF -->|false| Canceled
-```
-
-- Given you have a product with trial
-- Given you have a site with dunning strategy
-
-```mermaid
-  flowchart LR
-    AS[Awaiting Signup] --> A{Activate}
-    A -->|Success| Trialing
-    A -->|Failure| ROF{revert_on_failure}
-    ROF -->|true| AS
-    ROF -->|false| PD[Past Due]
-```
-
-### Activate Trialing subscription
-
-You can read more about the behavior of trialing subscriptions [here](https://maxio-chargify.zendesk.com/hc/en-us/articles/5404494617357#trialing-subscriptions-0-0).
-When the `revert_on_failure` parameter is set to `true`, the subscription's state will remain as Trialing, we will void the invoice from activation and return any prepayments and credits applied to the invoice back to the subscription.
-
-```java
-SubscriptionResponse activateSubscription(
-    final String subscriptionId,
-    final ActivateSubscriptionRequest body)
-```
-
-## Parameters
-
-| Parameter | Type | Tags | Description |
-|  --- | --- | --- | --- |
-| `subscriptionId` | `String` | Template, Required | The Chargify id of the subscription |
-| `body` | [`ActivateSubscriptionRequest`](../../doc/models/activate-subscription-request.md) | Body, Optional | - |
-
-## Response Type
-
-[`SubscriptionResponse`](../../doc/models/subscription-response.md)
-
-## Example Usage
-
-```java
-String subscriptionId = "subscription_id0";
-try {
-    SubscriptionResponse result = subscriptionsController.activateSubscription(subscriptionId, null);
-    System.out.println(result);
-} catch (ApiException e) {
-    e.printStackTrace();
-} catch (IOException e) {
-    e.printStackTrace();
-}
-```
-
-## Errors
-
-| HTTP Status Code | Error Description | Exception Class |
-|  --- | --- | --- |
-| 400 | Bad Request | [`NestedErrorResponseException`](../../doc/models/nested-error-response-exception.md) |
 

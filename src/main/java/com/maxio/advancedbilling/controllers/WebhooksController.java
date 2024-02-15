@@ -42,6 +42,80 @@ public final class WebhooksController extends BaseController {
     }
 
     /**
+     * Posting to the replay endpoint does not immediately resend the webhooks. They are added to a
+     * queue and will be sent as soon as possible, depending on available system resources. You may
+     * submit an array of up to 1000 webhook IDs to replay in the request.
+     * @param  body  Optional parameter: Example:
+     * @return    Returns the ReplayWebhooksResponse response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public ReplayWebhooksResponse replayWebhooks(
+            final ReplayWebhooksRequest body) throws ApiException, IOException {
+        return prepareReplayWebhooksRequest(body).execute();
+    }
+
+    /**
+     * Builds the ApiCall object for replayWebhooks.
+     */
+    private ApiCall<ReplayWebhooksResponse, ApiException> prepareReplayWebhooksRequest(
+            final ReplayWebhooksRequest body) throws JsonProcessingException, IOException {
+        return new ApiCall.Builder<ReplayWebhooksResponse, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/webhooks/replay.json")
+                        .bodyParam(param -> param.value(body).isRequired(false))
+                        .bodySerializer(() ->  ApiHelper.serialize(body))
+                        .headerParam(param -> param.key("Content-Type")
+                                .value("application/json").isRequired(false))
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.POST))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserialize(response, ReplayWebhooksResponse.class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
+     * This method returns created endpoints for site.
+     * @return    Returns the List of Endpoint response from the API call
+     * @throws    ApiException    Represents error response from the server.
+     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
+     */
+    public List<Endpoint> listEndpoints() throws ApiException, IOException {
+        return prepareListEndpointsRequest().execute();
+    }
+
+    /**
+     * Builds the ApiCall object for listEndpoints.
+     */
+    private ApiCall<List<Endpoint>, ApiException> prepareListEndpointsRequest() throws IOException {
+        return new ApiCall.Builder<List<Endpoint>, ApiException>()
+                .globalConfig(getGlobalConfiguration())
+                .requestBuilder(requestBuilder -> requestBuilder
+                        .server(Server.ENUM_DEFAULT.value())
+                        .path("/endpoints.json")
+                        .headerParam(param -> param.key("accept").value("application/json"))
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
+                        .httpMethod(HttpMethod.GET))
+                .responseHandler(responseHandler -> responseHandler
+                        .deserializer(
+                                response -> ApiHelper.deserializeArray(response,
+                                        Endpoint[].class))
+                        .globalErrorCase(GLOBAL_ERROR_CASES))
+                .endpointConfiguration(param -> param
+                                .arraySerializationFormat(ArraySerializationFormat.CSV))
+                .build();
+    }
+
+    /**
      * ## Webhooks Intro The Webhooks API allows you to view a list of all webhooks and to
      * selectively resend individual or groups of webhooks. Webhooks will be sent on endpoints
      * specified by you. Endpoints can be added via API or Web UI. There is also an option to enable
@@ -92,7 +166,8 @@ public final class WebhooksController extends BaseController {
                         .queryParam(param -> param.key("subscription")
                                 .value(input.getSubscription()).isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.GET))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -131,51 +206,12 @@ public final class WebhooksController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
                                 response -> ApiHelper.deserialize(response, EnableWebhooksResponse.class))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * Posting to the replay endpoint does not immediately resend the webhooks. They are added to a
-     * queue and will be sent as soon as possible, depending on available system resources. You may
-     * submit an array of up to 1000 webhook IDs to replay in the request.
-     * @param  body  Optional parameter: Example:
-     * @return    Returns the ReplayWebhooksResponse response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public ReplayWebhooksResponse replayWebhooks(
-            final ReplayWebhooksRequest body) throws ApiException, IOException {
-        return prepareReplayWebhooksRequest(body).execute();
-    }
-
-    /**
-     * Builds the ApiCall object for replayWebhooks.
-     */
-    private ApiCall<ReplayWebhooksResponse, ApiException> prepareReplayWebhooksRequest(
-            final ReplayWebhooksRequest body) throws JsonProcessingException, IOException {
-        return new ApiCall.Builder<ReplayWebhooksResponse, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/webhooks/replay.json")
-                        .bodyParam(param -> param.value(body).isRequired(false))
-                        .bodySerializer(() ->  ApiHelper.serialize(body))
-                        .headerParam(param -> param.key("Content-Type")
-                                .value("application/json").isRequired(false))
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.POST))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserialize(response, ReplayWebhooksResponse.class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -211,7 +247,8 @@ public final class WebhooksController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.POST))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
@@ -219,38 +256,6 @@ public final class WebhooksController extends BaseController {
                         .localErrorCase("422",
                                  ErrorCase.setReason("Unprocessable Entity (WebDAV)",
                                 (reason, context) -> new ErrorListResponseException(reason, context)))
-                        .globalErrorCase(GLOBAL_ERROR_CASES))
-                .endpointConfiguration(param -> param
-                                .arraySerializationFormat(ArraySerializationFormat.CSV))
-                .build();
-    }
-
-    /**
-     * This method returns created endpoints for site.
-     * @return    Returns the List of Endpoint response from the API call
-     * @throws    ApiException    Represents error response from the server.
-     * @throws    IOException    Signals that an I/O exception of some sort has occurred.
-     */
-    public List<Endpoint> listEndpoints() throws ApiException, IOException {
-        return prepareListEndpointsRequest().execute();
-    }
-
-    /**
-     * Builds the ApiCall object for listEndpoints.
-     */
-    private ApiCall<List<Endpoint>, ApiException> prepareListEndpointsRequest() throws IOException {
-        return new ApiCall.Builder<List<Endpoint>, ApiException>()
-                .globalConfig(getGlobalConfiguration())
-                .requestBuilder(requestBuilder -> requestBuilder
-                        .server(Server.ENUM_DEFAULT.value())
-                        .path("/endpoints.json")
-                        .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
-                        .httpMethod(HttpMethod.GET))
-                .responseHandler(responseHandler -> responseHandler
-                        .deserializer(
-                                response -> ApiHelper.deserializeArray(response,
-                                        Endpoint[].class))
                         .globalErrorCase(GLOBAL_ERROR_CASES))
                 .endpointConfiguration(param -> param
                                 .arraySerializationFormat(ArraySerializationFormat.CSV))
@@ -297,7 +302,8 @@ public final class WebhooksController extends BaseController {
                         .headerParam(param -> param.key("Content-Type")
                                 .value("application/json").isRequired(false))
                         .headerParam(param -> param.key("accept").value("application/json"))
-                        .authenticationKey(BaseController.AUTHENTICATION_KEY)
+                        .withAuth(auth -> auth
+                                .add("BasicAuth"))
                         .httpMethod(HttpMethod.PUT))
                 .responseHandler(responseHandler -> responseHandler
                         .deserializer(
