@@ -95,7 +95,7 @@ public final class AdvancedBillingClient implements Configuration {
 
     private static final CompatibilityFactory compatibilityFactory = new CompatibilityFactoryImpl();
 
-    private static String userAgent = "AB SDK Java:2.2.80 on OS {os-info}";
+    private static String userAgent = "AB SDK Java:2.4.69 on OS {os-info}";
 
     /**
      * Current API environment.
@@ -628,7 +628,7 @@ public final class AdvancedBillingClient implements Configuration {
          * @param basicAuthUserName String value for basicAuthUserName.
          * @param basicAuthPassword String value for basicAuthPassword.
          * @deprecated This builder method is deprecated.
-         * Use {@link #basicAuthCredentials(authModelVarName) basicAuthCredentials} instead.
+         * Use {@link #basicAuthCredentials(BasicAuthModel) basicAuthCredentials} instead.
          * @return The current instance of builder.
          */
         @Deprecated

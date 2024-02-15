@@ -55,8 +55,8 @@ public class BasicAuthModel {
 
         /**
          * The constructor with required auth credentials.
-         * username The value of Username.
-         * password The value of Password.
+         * @param username The value of Username.
+         * @param password The value of Password.
          */
         public Builder(String username, String password) {
             if (username == null) {
@@ -100,7 +100,8 @@ public class BasicAuthModel {
         }
 
         /**
-         * Builds the instance of BasicAuthModel.
+         * Builds the instance of BasicAuthModel using the provided credentials.
+         * @return The instance of BasicAuthModel.
          */
         public BasicAuthModel build() {
             return new BasicAuthModel(username, password);
