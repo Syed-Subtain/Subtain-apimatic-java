@@ -7,6 +7,7 @@
 package com.maxio.advancedbilling.controllers;
 
 import com.maxio.advancedbilling.exceptions.ApiException;
+import com.maxio.advancedbilling.http.client.HttpCallback;
 import io.apimatic.core.ErrorCase;
 import io.apimatic.core.GlobalConfiguration;
 import io.apimatic.coreinterfaces.http.HttpClient;
@@ -29,6 +30,13 @@ public abstract class BaseController {
         this.globalConfig = globalConfig;
     }
 
+    /**
+     * Get httpCallback associated with this controller.
+     * @return HttpCallback
+     */
+    public HttpCallback getHttpCallback() {
+        return (HttpCallback) globalConfig.getHttpCallback();
+    }
     
     /**
      * Shared instance of the Http client.

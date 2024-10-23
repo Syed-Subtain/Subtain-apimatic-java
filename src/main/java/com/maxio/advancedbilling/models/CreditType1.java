@@ -46,8 +46,7 @@ public enum CreditType1 {
     @JsonCreator
     public static CreditType1 constructFromString(String toConvert) throws IOException {
         CreditType1 enumValue = fromString(toConvert);
-        if (enumValue == null)
-        {
+        if (enumValue == null) {
             throw new IOException("Unable to create enum instance with value: " + toConvert);
         }
         return enumValue;

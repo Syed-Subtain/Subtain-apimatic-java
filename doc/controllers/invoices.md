@@ -193,13 +193,13 @@ ListCreditNotesResponse listCreditNotes(
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
 | `subscriptionId` | `Integer` | Query, Optional | The subscription's Chargify id |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
-| `lineItems` | `Boolean` | Query, Optional | Include line items data |
-| `discounts` | `Boolean` | Query, Optional | Include discounts data |
-| `taxes` | `Boolean` | Query, Optional | Include taxes data |
-| `refunds` | `Boolean` | Query, Optional | Include refunds data |
-| `applications` | `Boolean` | Query, Optional | Include applications data |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
+| `lineItems` | `Boolean` | Query, Optional | Include line items data<br>**Default**: `false` |
+| `discounts` | `Boolean` | Query, Optional | Include discounts data<br>**Default**: `false` |
+| `taxes` | `Boolean` | Query, Optional | Include taxes data<br>**Default**: `false` |
+| `refunds` | `Boolean` | Query, Optional | Include refunds data<br>**Default**: `false` |
+| `applications` | `Boolean` | Query, Optional | Include applications data<br>**Default**: `false` |
 
 ## Response Type
 
@@ -970,9 +970,9 @@ ConsolidatedInvoice listInvoiceSegments(
 | Parameter | Type | Tags | Description |
 |  --- | --- | --- | --- |
 | `invoiceUid` | `String` | Template, Required | The unique identifier of the consolidated invoice |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
-| `direction` | [`Direction`](../../doc/models/direction.md) | Query, Optional | Sort direction of the returned segments. |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
+| `direction` | [`Direction`](../../doc/models/direction.md) | Query, Optional | Sort direction of the returned segments.<br>**Default**: `Direction.ASC` |
 
 ## Response Type
 
@@ -1606,23 +1606,23 @@ ListInvoicesResponse listInvoices(
 | `status` | [`Status`](../../doc/models/status.md) | Query, Optional | The current status of the invoice.  Allowed Values: draft, open, paid, pending, voided |
 | `subscriptionId` | `Integer` | Query, Optional | The subscription's ID. |
 | `subscriptionGroupUid` | `String` | Query, Optional | The UID of the subscription group you want to fetch consolidated invoices for. This will return a paginated list of consolidated invoices for the specified group. |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`. |
-| `direction` | [`Direction`](../../doc/models/direction.md) | Query, Optional | The sort direction of the returned invoices. |
-| `lineItems` | `Boolean` | Query, Optional | Include line items data |
-| `discounts` | `Boolean` | Query, Optional | Include discounts data |
-| `taxes` | `Boolean` | Query, Optional | Include taxes data |
-| `credits` | `Boolean` | Query, Optional | Include credits data |
-| `payments` | `Boolean` | Query, Optional | Include payments data |
-| `customFields` | `Boolean` | Query, Optional | Include custom fields data |
-| `refunds` | `Boolean` | Query, Optional | Include refunds data |
-| `dateField` | [`InvoiceDateField`](../../doc/models/invoice-date-field.md) | Query, Optional | The type of filter you would like to apply to your search. Use in query `date_field=issue_date`. |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 20. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>Use in query `per_page=200`.<br>**Default**: `20`<br>**Constraints**: `<= 200` |
+| `direction` | [`Direction`](../../doc/models/direction.md) | Query, Optional | The sort direction of the returned invoices.<br>**Default**: `Direction.DESC` |
+| `lineItems` | `Boolean` | Query, Optional | Include line items data<br>**Default**: `false` |
+| `discounts` | `Boolean` | Query, Optional | Include discounts data<br>**Default**: `false` |
+| `taxes` | `Boolean` | Query, Optional | Include taxes data<br>**Default**: `false` |
+| `credits` | `Boolean` | Query, Optional | Include credits data<br>**Default**: `false` |
+| `payments` | `Boolean` | Query, Optional | Include payments data<br>**Default**: `false` |
+| `customFields` | `Boolean` | Query, Optional | Include custom fields data<br>**Default**: `false` |
+| `refunds` | `Boolean` | Query, Optional | Include refunds data<br>**Default**: `false` |
+| `dateField` | [`InvoiceDateField`](../../doc/models/invoice-date-field.md) | Query, Optional | The type of filter you would like to apply to your search. Use in query `date_field=issue_date`.<br>**Default**: `InvoiceDateField.DUE_DATE` |
 | `startDatetime` | `String` | Query, Optional | The start date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns invoices with a timestamp at or after exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of start_date. Allowed to be used only along with date_field set to created_at or updated_at. |
 | `endDatetime` | `String` | Query, Optional | The end date and time (format YYYY-MM-DD HH:MM:SS) with which to filter the date_field. Returns invoices with a timestamp at or before exact time provided in query. You can specify timezone in query - otherwise your site's time zone will be used. If provided, this parameter will be used instead of end_date. Allowed to be used only along with date_field set to created_at or updated_at. |
 | `customerIds` | `List<Integer>` | Query, Optional | Allows fetching invoices with matching customer id based on provided values. Use in query `customer_ids=1,2,3`. |
 | `number` | `List<String>` | Query, Optional | Allows fetching invoices with matching invoice number based on provided values. Use in query `number=1234,1235`. |
 | `productIds` | `List<Integer>` | Query, Optional | Allows fetching invoices with matching line items product ids based on provided values. Use in query `product_ids=23,34`. |
-| `sort` | [`InvoiceSortField`](../../doc/models/invoice-sort-field.md) | Query, Optional | Allows specification of the order of the returned list. Use in query `sort=total_amount`. |
+| `sort` | [`InvoiceSortField`](../../doc/models/invoice-sort-field.md) | Query, Optional | Allows specification of the order of the returned list. Use in query `sort=total_amount`.<br>**Default**: `InvoiceSortField.NUMBER` |
 
 ## Response Type
 
@@ -1977,8 +1977,8 @@ ListInvoiceEventsResponse listInvoiceEvents(
 |  --- | --- | --- | --- |
 | `sinceDate` | `String` | Query, Optional | The timestamp in a format `YYYY-MM-DD T HH:MM:SS Z`, or `YYYY-MM-DD`(in this case, it returns data from the beginning of the day). of the event from which you want to start the search. All the events before the `since_date` timestamp are not returned in the response. |
 | `sinceId` | `Integer` | Query, Optional | The ID of the event from which you want to start the search(ID is not included. e.g. if ID is set to 2, then all events with ID 3 and more will be shown) This parameter is not used if since_date is defined. |
-| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`. |
-| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 100. The maximum allowed values is 200; any per_page value over 200 will be changed to 200. |
+| `page` | `Integer` | Query, Optional | Result records are organized in pages. By default, the first page of results is displayed. The page parameter specifies a page number of results to fetch. You can start navigating through the pages to consume the results. You do this by passing in a page parameter. Retrieve the next page by adding ?page=2 to the query string. If there are no results to return, then an empty result set will be returned.<br>Use in query `page=1`.<br>**Default**: `1`<br>**Constraints**: `>= 1` |
+| `perPage` | `Integer` | Query, Optional | This parameter indicates how many records to fetch in each request. Default value is 100. The maximum allowed values is 200; any per_page value over 200 will be changed to 200.<br>**Default**: `100` |
 | `invoiceUid` | `String` | Query, Optional | Providing an invoice_uid allows for scoping of the invoice events to a single invoice or credit note. |
 | `withChangeInvoiceStatus` | `String` | Query, Optional | Use this parameter if you want to fetch also invoice events with change_invoice_status type. |
 | `eventTypes` | [`List<InvoiceEventType>`](../../doc/models/invoice-event-type.md) | Query, Optional | Filter results by event_type. Supply a comma separated list of event types (listed above). Use in query: `event_types=void_invoice,void_remainder`. |
@@ -2002,380 +2002,6 @@ try {
     e.printStackTrace();
 } catch (IOException e) {
     e.printStackTrace();
-}
-```
-
-## Example Response *(as JSON)*
-
-```json
-{
-  "events": [
-    {
-      "id": 83,
-      "event_type": "apply_payment",
-      "event_data": {
-        "memo": "Non-Resumable Canceled On Purpose - Standard Plan: Renewal payment",
-        "original_amount": "168.61",
-        "applied_amount": "168.61",
-        "transaction_time": "2018-08-01T16:00:00Z",
-        "payment_method": {
-          "card_brand": "visa",
-          "card_expiration": "12/2022",
-          "last_four": null,
-          "masked_card_number": "XXXX-XXXX-XXXX-1111",
-          "type": "credit_card"
-        },
-        "consolidation_level": "none"
-      },
-      "timestamp": "2018-08-01T16:00:00Z",
-      "invoice": {
-        "id": 614942008934401500,
-        "uid": "inv_8gk5bwkct3gqt",
-        "site_id": 20,
-        "customer_id": 6,
-        "subscription_id": 10,
-        "number": "25",
-        "sequence_number": 25,
-        "transaction_time": "2018-08-01T16:00:00Z",
-        "created_at": "2018-08-01T16:00:00Z",
-        "updated_at": "2018-08-01T16:00:00Z",
-        "issue_date": "2018-08-01",
-        "due_date": "2018-08-01",
-        "paid_date": "2018-08-01",
-        "status": "paid",
-        "role": "renewal",
-        "collection_method": "automatic",
-        "payment_instructions": "Please make checks payable to \"Acme, Inc.\"",
-        "currency": "USD",
-        "consolidation_level": "none",
-        "parent_invoice_id": null,
-        "subscription_group_id": null,
-        "parent_invoice_number": null,
-        "product_name": "Standard Plan",
-        "product_family_name": "Cloud Compute Servers",
-        "seller": {
-          "name": "Acme, Inc.",
-          "address": {
-            "street": null,
-            "line2": null,
-            "city": null,
-            "state": null,
-            "zip": null,
-            "country": null
-          },
-          "phone": "555-555-1234 x137",
-          "logo_url": null
-        },
-        "customer": {
-          "chargify_id": 6,
-          "first_name": "Non-Resumable",
-          "last_name": "Canceled On Purpose",
-          "organization": null,
-          "email": "evan4@example.com"
-        },
-        "payer": {
-          "chargify_id": 6,
-          "first_name": "Non-Resumable",
-          "last_name": "Canceled On Purpose",
-          "organization": null,
-          "email": "evan4@example.com"
-        },
-        "recipient_emails": [],
-        "net_terms": 0,
-        "memo": "Thanks for your business! If you have any questions, please contact your account manager.",
-        "billing_address": {
-          "street": "200 Billing Rd.",
-          "line2": "Suite 100",
-          "city": "Needham",
-          "state": "MA",
-          "zip": "02494",
-          "country": "US"
-        },
-        "shipping_address": {
-          "street": "100 Shipping St.",
-          "line2": "Apt 200",
-          "city": "Pleasantville",
-          "state": "NC",
-          "zip": "12345",
-          "country": "US"
-        },
-        "line_items": [
-          {
-            "uid": "li_8gk5bwkct3gqk",
-            "title": "Standard Plan",
-            "description": "08/01/2018 - 09/01/2018",
-            "quantity": "1.0",
-            "unit_price": "99.0",
-            "subtotal_amount": "99.0",
-            "discount_amount": "9.9",
-            "tax_amount": "6.01425",
-            "total_amount": "95.11425",
-            "tiered_unit_price": false,
-            "period_range_start": "2018-08-01",
-            "period_range_end": "2018-09-01",
-            "transaction_id": 120,
-            "product_id": 84,
-            "product_version": 1,
-            "component_id": null,
-            "price_point_id": null,
-            "hide": false
-          },
-          {
-            "uid": "li_8gk5bwkct3gqm",
-            "title": "Small Instance (Hourly)",
-            "description": "07/22/2018 - 08/01/2018",
-            "quantity": "162.0",
-            "unit_price": "0.09567901",
-            "subtotal_amount": "15.5",
-            "discount_amount": "1.55",
-            "tax_amount": "0.941625",
-            "total_amount": "14.891625",
-            "tiered_unit_price": true,
-            "period_range_start": "2018-07-22",
-            "period_range_end": "2018-08-01",
-            "transaction_id": 121,
-            "product_id": 84,
-            "product_version": 1,
-            "component_id": 76,
-            "price_point_id": null,
-            "hide": false,
-            "component_cost_data": {
-              "rates": [
-                {
-                  "component_code_id": null,
-                  "price_point_id": 160,
-                  "product_id": 84,
-                  "quantity": "162.0",
-                  "amount": "15.5",
-                  "pricing_scheme": "tiered",
-                  "tiers": [
-                    {
-                      "starting_quantity": 1,
-                      "ending_quantity": 100,
-                      "quantity": "100.0",
-                      "unit_price": "0.0",
-                      "amount": "0.0"
-                    },
-                    {
-                      "starting_quantity": 101,
-                      "ending_quantity": null,
-                      "quantity": "62.0",
-                      "unit_price": "0.25",
-                      "amount": "15.5"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "uid": "li_8gk5bwkct3gqn",
-            "title": "Large Instance (Hourly)",
-            "description": "07/22/2018 - 08/01/2018",
-            "quantity": "194.0",
-            "unit_price": "0.24226804",
-            "subtotal_amount": "47.0",
-            "discount_amount": "4.7",
-            "tax_amount": "2.85525",
-            "total_amount": "45.15525",
-            "tiered_unit_price": true,
-            "period_range_start": "2018-07-22",
-            "period_range_end": "2018-08-01",
-            "transaction_id": 122,
-            "product_id": 84,
-            "product_version": 1,
-            "component_id": 77,
-            "price_point_id": null,
-            "hide": false,
-            "component_cost_data": {
-              "rates": [
-                {
-                  "component_code_id": null,
-                  "price_point_id": 161,
-                  "product_id": 84,
-                  "quantity": "194.0",
-                  "amount": "47.0",
-                  "pricing_scheme": "tiered",
-                  "tiers": [
-                    {
-                      "starting_quantity": 1,
-                      "ending_quantity": 100,
-                      "quantity": "100.0",
-                      "unit_price": "0.0",
-                      "amount": "0.0"
-                    },
-                    {
-                      "starting_quantity": 101,
-                      "ending_quantity": null,
-                      "quantity": "94.0",
-                      "unit_price": "0.5",
-                      "amount": "47.0"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "uid": "li_8gk5bwkct3gqp",
-            "title": "IP Addresses",
-            "description": "08/01/2018 - 09/01/2018",
-            "quantity": "7.0",
-            "unit_price": "2.0",
-            "subtotal_amount": "14.0",
-            "discount_amount": "1.4",
-            "tax_amount": "0.8505",
-            "total_amount": "13.4505",
-            "tiered_unit_price": false,
-            "period_range_start": "2018-08-01",
-            "period_range_end": "2018-09-01",
-            "transaction_id": 123,
-            "product_id": 84,
-            "product_version": 1,
-            "component_id": 79,
-            "price_point_id": 163,
-            "hide": false,
-            "component_cost_data": {
-              "rates": [
-                {
-                  "component_code_id": null,
-                  "price_point_id": 163,
-                  "product_id": 84,
-                  "quantity": "7.0",
-                  "amount": "14.0",
-                  "pricing_scheme": "per_unit",
-                  "tiers": [
-                    {
-                      "starting_quantity": 1,
-                      "ending_quantity": null,
-                      "quantity": "7.0",
-                      "unit_price": "2.0",
-                      "amount": "14.0"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ],
-        "subtotal_amount": "175.5",
-        "discount_amount": "17.55",
-        "discounts": [
-          {
-            "uid": "dli_8gk5bwkct3gqq",
-            "title": "Multi-service discount (10%)",
-            "description": null,
-            "code": "MULTI3",
-            "source_type": "Coupon",
-            "source_id": 40,
-            "discount_type": "percentage",
-            "percentage": "10.0",
-            "eligible_amount": "175.5",
-            "discount_amount": "17.55",
-            "transaction_id": 124,
-            "line_item_breakouts": [
-              {
-                "uid": "li_8gk5bwkct3gqk",
-                "eligible_amount": "99.0",
-                "discount_amount": "9.9"
-              },
-              {
-                "uid": "li_8gk5bwkct3gqm",
-                "eligible_amount": "15.5",
-                "discount_amount": "1.55"
-              },
-              {
-                "uid": "li_8gk5bwkct3gqn",
-                "eligible_amount": "47.0",
-                "discount_amount": "4.7"
-              },
-              {
-                "uid": "li_8gk5bwkct3gqp",
-                "eligible_amount": "14.0",
-                "discount_amount": "1.4"
-              }
-            ]
-          }
-        ],
-        "tax_amount": "10.66",
-        "taxes": [
-          {
-            "uid": "tli_8gk5bwkct3gqr",
-            "title": "NC Sales Tax",
-            "description": null,
-            "source_type": "Tax",
-            "source_id": 1,
-            "percentage": "6.75",
-            "taxable_amount": "157.95",
-            "tax_amount": "10.66",
-            "transaction_id": 125,
-            "line_item_breakouts": [
-              {
-                "uid": "li_8gk5bwkct3gqk",
-                "taxable_amount": "89.1",
-                "tax_amount": "6.01425"
-              },
-              {
-                "uid": "li_8gk5bwkct3gqm",
-                "taxable_amount": "13.95",
-                "tax_amount": "0.941625"
-              },
-              {
-                "uid": "li_8gk5bwkct3gqn",
-                "taxable_amount": "42.3",
-                "tax_amount": "2.85525"
-              },
-              {
-                "uid": "li_8gk5bwkct3gqp",
-                "taxable_amount": "12.6",
-                "tax_amount": "0.8505"
-              }
-            ],
-            "tax_component_breakouts": [
-              {
-                "tax_rule_id": 1,
-                "percentage": "6.75",
-                "country_code": "US",
-                "subdivision_code": "NC"
-              }
-            ]
-          }
-        ],
-        "credit_amount": "0.0",
-        "refund_amount": "0.0",
-        "total_amount": "168.61",
-        "paid_amount": "168.61",
-        "due_amount": "0.0",
-        "credits": [],
-        "refunds": [],
-        "payments": [
-          {
-            "memo": "Non-Resumable Canceled On Purpose - Standard Plan: Renewal payment",
-            "original_amount": "168.61",
-            "applied_amount": "168.61",
-            "transaction_time": "2018-08-01T16:00:00Z",
-            "payment_method": {
-              "card_brand": "visa",
-              "card_expiration": "12/2022",
-              "last_four": null,
-              "masked_card_number": "XXXX-XXXX-XXXX-1111",
-              "type": "credit_card"
-            },
-            "transaction_id": 126,
-            "prepayment": false
-          }
-        ],
-        "custom_fields": [],
-        "display_settings": {
-          "hide_zero_subtotal_lines": false,
-          "include_discounts_on_lines": false
-        }
-      }
-    }
-  ],
-  "page": 48,
-  "per_page": 1,
-  "total_pages": 102
 }
 ```
 

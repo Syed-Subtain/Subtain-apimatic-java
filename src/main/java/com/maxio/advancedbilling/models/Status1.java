@@ -42,8 +42,7 @@ public enum Status1 {
     @JsonCreator
     public static Status1 constructFromString(String toConvert) throws IOException {
         Status1 enumValue = fromString(toConvert);
-        if (enumValue == null)
-        {
+        if (enumValue == null) {
             throw new IOException("Unable to create enum instance with value: " + toConvert);
         }
         return enumValue;

@@ -39,6 +39,7 @@ import com.maxio.advancedbilling.controllers.SubscriptionProductsController;
 import com.maxio.advancedbilling.controllers.SubscriptionStatusController;
 import com.maxio.advancedbilling.controllers.SubscriptionsController;
 import com.maxio.advancedbilling.controllers.WebhooksController;
+import com.maxio.advancedbilling.http.client.HttpCallback;
 import com.maxio.advancedbilling.http.client.HttpClientConfiguration;
 import com.maxio.advancedbilling.http.client.ReadonlyHttpClientConfiguration;
 import io.apimatic.core.GlobalConfiguration;
@@ -50,6 +51,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Gateway class for the library.
@@ -95,7 +97,7 @@ public final class AdvancedBillingClient implements Configuration {
 
     private static final CompatibilityFactory compatibilityFactory = new CompatibilityFactoryImpl();
 
-    private static String userAgent = "AB SDK Java:2.4.69 on OS {os-info}";
+    private static String userAgent = "AB SDK Java:6.5.6 on OS {os-info}";
 
     /**
      * Current API environment.
@@ -135,35 +137,33 @@ public final class AdvancedBillingClient implements Configuration {
     /**
      * Map of authentication Managers.
      */
-    private Map<String, Authentication> authentications;
+    private Map<String, Authentication> authentications = new HashMap<String, Authentication>();
+
+    /**
+     * Callback to be called before and after the HTTP call for an endpoint is made.
+     */
+    private final HttpCallback httpCallback;
 
     private AdvancedBillingClient(Environment environment, String subdomain, String domain,
             HttpClient httpClient, ReadonlyHttpClientConfiguration httpClientConfig,
-            BasicAuthModel basicAuthModel, Map<String, Authentication> authentications) {
+            BasicAuthModel basicAuthModel, HttpCallback httpCallback) {
         this.environment = environment;
         this.subdomain = subdomain;
         this.domain = domain;
         this.httpClient = httpClient;
         this.httpClientConfig = httpClientConfig;
-        this.authentications = 
-                (authentications == null) ? new HashMap<>() : new HashMap<>(authentications);
+        this.httpCallback = httpCallback;
+
         this.basicAuthModel = basicAuthModel;
 
-        if (this.authentications.containsKey("BasicAuth")) {
-            this.basicAuthManager = (BasicAuthManager) this.authentications.get("BasicAuth");
-        }
-
-        if (!this.authentications.containsKey("BasicAuth")
-                || !getBasicAuthCredentials().equals(basicAuthModel.getUsername(),
-                        basicAuthModel.getPassword())) {
-            this.basicAuthManager = new BasicAuthManager(basicAuthModel);
-            this.authentications.put("BasicAuth", basicAuthManager);
-        }
+        this.basicAuthManager = new BasicAuthManager(basicAuthModel);
+        this.authentications.put("BasicAuth", basicAuthManager);
 
         GlobalConfiguration globalConfig = new GlobalConfiguration.Builder()
                 .httpClient(httpClient).baseUri(server -> getBaseUri(server))
                 .compatibilityFactory(compatibilityFactory)
                 .authentication(this.authentications)
+                .callback(httpCallback)
                 .userAgent(userAgent)
                 .build();
         aPIExports = new APIExportsController(globalConfig);
@@ -602,9 +602,8 @@ public final class AdvancedBillingClient implements Configuration {
         builder.httpClient = getHttpClient();
         builder.basicAuthCredentials(getBasicAuthModel()
                 .toBuilder().build());
-        builder.authentications = authentications;
-        builder.httpClientConfig(configBldr -> configBldr =
-                ((HttpClientConfiguration) httpClientConfig).newBuilder());
+        builder.httpCallback = httpCallback;
+        builder.httpClientConfig(() -> ((HttpClientConfiguration) httpClientConfig).newBuilder());
         return builder;
     }
 
@@ -618,7 +617,7 @@ public final class AdvancedBillingClient implements Configuration {
         private String domain = "chargify.com";
         private HttpClient httpClient;
         private BasicAuthModel basicAuthModel = new BasicAuthModel.Builder("", "").build();
-        private Map<String, Authentication> authentications = null;
+        private HttpCallback httpCallback = null;
         private HttpClientConfiguration.Builder httpClientConfigBuilder =
                 new HttpClientConfiguration.Builder();
 
@@ -694,6 +693,16 @@ public final class AdvancedBillingClient implements Configuration {
         }
 
         /**
+         * HttpCallback.
+         * @param httpCallback Callback to be called before and after the HTTP call.
+         * @return Builder
+         */
+        public Builder httpCallback(HttpCallback httpCallback) {
+            this.httpCallback = httpCallback;
+            return this;
+        }
+
+        /**
          * Setter for the Builder of httpClientConfiguration, takes in an operation to be performed
          * on the builder instance of HTTP client configuration.
          * 
@@ -706,6 +715,18 @@ public final class AdvancedBillingClient implements Configuration {
         }
 
         /**
+         * Private Setter for the Builder of httpClientConfiguration, takes in an operation to be performed
+         * on the builder instance of HTTP client configuration.
+         * 
+         * @param supplier Supplier for the builder of httpClientConfiguration.
+         * @return Builder
+         */
+        private Builder httpClientConfig(Supplier<HttpClientConfiguration.Builder> supplier) {
+            httpClientConfigBuilder = supplier.get();
+            return this;
+        }
+
+        /**
          * Builds a new AdvancedBillingClient object using the set fields.
          * @return AdvancedBillingClient
          */
@@ -714,7 +735,7 @@ public final class AdvancedBillingClient implements Configuration {
             httpClient = new OkClient(httpClientConfig.getConfiguration(), compatibilityFactory);
 
             return new AdvancedBillingClient(environment, subdomain, domain, httpClient,
-                    httpClientConfig, basicAuthModel, authentications);
+                    httpClientConfig, basicAuthModel, httpCallback);
         }
     }
 }
