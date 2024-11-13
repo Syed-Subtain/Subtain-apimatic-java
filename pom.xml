@@ -8,7 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.sufyankhanrao</groupId>
   <artifactId>subtain-apimatic</artifactId>
-  <version>11.1.3</version>
+  <version>11.1.4</version>
   <packaging>jar</packaging>
   <name>Apimatic Pro</name>
   <description>this is sample please ignore</description>
