@@ -274,16 +274,16 @@ Install the SDK by adding the following dependency in your project's pom.xml fil
 <dependency>
   <groupId>io.github.sufyankhanrao</groupId>
   <artifactId>subtain-apimatic</artifactId>
-  <version>9.1.2</version>
+  <version>9.1.3</version>
 </dependency>
 ```
 
 You can also view the package at:
-https://central.sonatype.com/artifact/io.github.sufyankhanrao/subtain-apimatic/9.1.2
+https://central.sonatype.com/artifact/io.github.sufyankhanrao/subtain-apimatic/9.1.3
 
 ## Initialize the API Client
 
-**_Note:_** Documentation for the client can be found [here.](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/client.md)
+**_Note:_** Documentation for the client can be found [here.](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/client.md)
 
 The following parameters are configurable for the API Client:
 
@@ -292,8 +292,8 @@ The following parameters are configurable for the API Client:
 | `subdomain` | `String` | The subdomain for your Chargify site.<br>*Default*: `"subdomain"` |
 | `domain` | `String` | The Chargify server domain.<br>*Default*: `"chargify.com"` |
 | `environment` | `Environment` | The API environment. <br> **Default: `Environment.PRODUCTION`** |
-| `httpClientConfig` | [`Consumer<HttpClientConfiguration.Builder>`](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-client-configuration-builder.md) | Set up Http Client Configuration instance. |
-| `basicAuthCredentials` | [`BasicAuthCredentials`](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/auth/basic-authentication.md) | The Credentials Setter for Basic Authentication |
+| `httpClientConfig` | [`Consumer<HttpClientConfiguration.Builder>`](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-client-configuration-builder.md) | Set up Http Client Configuration instance. |
+| `basicAuthCredentials` | [`BasicAuthCredentials`](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/auth/basic-authentication.md) | The Credentials Setter for Basic Authentication |
 
 The API client can be initialized as follows:
 
@@ -327,54 +327,54 @@ The SDK can be configured to use a different environment for making API calls. A
 
 This API uses the following authentication schemes.
 
-* [`BasicAuth (Basic Authentication)`](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/auth/basic-authentication.md)
+* [`BasicAuth (Basic Authentication)`](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/auth/basic-authentication.md)
 
 ## List of APIs
 
-* [API Exports](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/api-exports.md)
-* [Advance Invoice](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/advance-invoice.md)
-* [Billing Portal](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/billing-portal.md)
-* [Custom Fields](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/custom-fields.md)
-* [Events-Based Billing Segments](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/events-based-billing-segments.md)
-* [Payment Profiles](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/payment-profiles.md)
-* [Product Families](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/product-families.md)
-* [Product Price Points](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/product-price-points.md)
-* [Proforma Invoices](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/proforma-invoices.md)
-* [Reason Codes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/reason-codes.md)
-* [Referral Codes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/referral-codes.md)
-* [Sales Commissions](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/sales-commissions.md)
-* [Subscription Components](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-components.md)
-* [Subscription Groups](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-groups.md)
-* [Subscription Group Invoice Account](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-group-invoice-account.md)
-* [Subscription Group Status](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-group-status.md)
-* [Subscription Invoice Account](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-invoice-account.md)
-* [Subscription Notes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-notes.md)
-* [Subscription Products](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-products.md)
-* [Subscription Status](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscription-status.md)
-* [Coupons](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/coupons.md)
-* [Components](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/components.md)
-* [Customers](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/customers.md)
-* [Events](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/events.md)
-* [Insights](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/insights.md)
-* [Invoices](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/invoices.md)
-* [Offers](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/offers.md)
-* [Products](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/products.md)
-* [Sites](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/sites.md)
-* [Subscriptions](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/subscriptions.md)
-* [Webhooks](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/controllers/webhooks.md)
+* [API Exports](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/api-exports.md)
+* [Advance Invoice](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/advance-invoice.md)
+* [Billing Portal](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/billing-portal.md)
+* [Custom Fields](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/custom-fields.md)
+* [Events-Based Billing Segments](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/events-based-billing-segments.md)
+* [Payment Profiles](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/payment-profiles.md)
+* [Product Families](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/product-families.md)
+* [Product Price Points](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/product-price-points.md)
+* [Proforma Invoices](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/proforma-invoices.md)
+* [Reason Codes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/reason-codes.md)
+* [Referral Codes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/referral-codes.md)
+* [Sales Commissions](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/sales-commissions.md)
+* [Subscription Components](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-components.md)
+* [Subscription Groups](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-groups.md)
+* [Subscription Group Invoice Account](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-group-invoice-account.md)
+* [Subscription Group Status](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-group-status.md)
+* [Subscription Invoice Account](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-invoice-account.md)
+* [Subscription Notes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-notes.md)
+* [Subscription Products](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-products.md)
+* [Subscription Status](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscription-status.md)
+* [Coupons](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/coupons.md)
+* [Components](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/components.md)
+* [Customers](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/customers.md)
+* [Events](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/events.md)
+* [Insights](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/insights.md)
+* [Invoices](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/invoices.md)
+* [Offers](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/offers.md)
+* [Products](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/products.md)
+* [Sites](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/sites.md)
+* [Subscriptions](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/subscriptions.md)
+* [Webhooks](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/controllers/webhooks.md)
 
 ## Classes Documentation
 
-* [Utility Classes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/utility-classes.md)
-* [HttpRequest](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-request.md)
-* [HttpResponse](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-response.md)
-* [HttpStringResponse](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-string-response.md)
-* [HttpContext](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-context.md)
-* [HttpBodyRequest](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-body-request.md)
-* [HttpCallback Interface](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-callback-interface.md)
-* [Headers](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/headers.md)
-* [ApiException](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/api-exception.md)
-* [Configuration Interface](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/configuration-interface.md)
-* [HttpClientConfiguration](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-client-configuration.md)
-* [HttpClientConfiguration.Builder](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.2/doc/http-client-configuration-builder.md)
+* [Utility Classes](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/utility-classes.md)
+* [HttpRequest](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-request.md)
+* [HttpResponse](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-response.md)
+* [HttpStringResponse](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-string-response.md)
+* [HttpContext](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-context.md)
+* [HttpBodyRequest](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-body-request.md)
+* [HttpCallback Interface](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-callback-interface.md)
+* [Headers](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/headers.md)
+* [ApiException](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/api-exception.md)
+* [Configuration Interface](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/configuration-interface.md)
+* [HttpClientConfiguration](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-client-configuration.md)
+* [HttpClientConfiguration.Builder](https://www.github.com/Syed-Subtain/Subtain-apimatic-java/tree/9.1.3/doc/http-client-configuration-builder.md)
 
